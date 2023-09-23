@@ -3,10 +3,14 @@
 #include <cmath>
 
 namespace math {
-template<size_t Exponent, typename T>
-auto
-tpow(const T& x)
-{
+
+template <typename T>
+constexpr T pi() {
+  return 3.14159265359;
+}
+
+template <size_t Exponent, typename T>
+auto tpow(const T& x) {
   if constexpr (Exponent == 0)
     return 1;
   else if constexpr (Exponent == 1)
@@ -24,4 +28,5 @@ tpow(const T& x)
       return half2 * x;
   }
 }
-}
+
+}  // namespace math

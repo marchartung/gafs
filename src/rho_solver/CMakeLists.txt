@@ -3,6 +3,12 @@ cmake_minimum_required(VERSION 3.10)
 
 SET(SOURCES 
   rho_solver.cpp
+  materials.hpp
+  basic_equations.hpp
+  dynamic_boundary.hpp
+  particles.hpp
+  neighbor.hpp
+  std_rhs.hpp
 )
 
 SET(LIBRARIES "${LIBRARIES}" gafs_utils gafs_file)

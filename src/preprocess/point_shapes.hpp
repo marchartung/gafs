@@ -6,16 +6,23 @@
 
 #include "utils/types.hpp"
 
-namespace shape {
-std::vector<Pointd> Cube(const size_t n_per_dim, const double dr) {
-  std::vector<Pointd> res(n_per_dim * n_per_dim * n_per_dim);
-#pragma omp parallel for schedule(static)
-  for (size_t x = 0; x < n_per_dim; ++x)
-    for (size_t y = 0; y < n_per_dim; ++y)
-      for (size_t z = 0; z < n_per_dim; ++z) {
-        res[n_per_dim * n_per_dim * x + n_per_dim * y + z] =
-            Pointd{dr * x, dr * y, dr * z};
+class PointDiscretize {
+ public:
+  static std::vector<Pointd> Cube(const double dr, const Pointd dim,
+                                  Pointd trans) {
+    const double offset = dr / 2.;
+    std::vector<Pointd> res;
+    Pointd cur;
+    for (size_t x = 0; x < dim[0] / dr; ++x) {
+      cur[0] = offset + x * dr;
+      for (size_t y = 0; y < dim[1] / dr; ++y) {
+        cur[1] = offset + y * dr;
+        for (size_t z = 0; z < dim[2] / dr; ++z) {
+          cur[2] = offset + z * dr;
+          res.push_back(cur + trans);
+        }
       }
-  return res;
-}
-}  // namespace shape
+    }
+    return res;
+  }
+};
