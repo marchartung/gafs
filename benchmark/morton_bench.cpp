@@ -9,7 +9,7 @@
 
 static void Morton64PointsCreate(benchmark::State& state) {
   auto [dr, init_points] = CreatePointCuboid(8'000'000, 1.0);
-  const GpuVector<Pointd> points = init_points;
+  const GpuVector<Vectord> points = init_points;
   for (auto _ : state) {
     auto [index_map, morton_points] =
         MortonPoints<Morton64>::Create(2. * 1.2 * dr, points);
@@ -20,7 +20,7 @@ BENCHMARK(Morton64PointsCreate)->Unit(benchmark::kMillisecond);
 
 static void Morton32PointsCreate(benchmark::State& state) {
   auto [dr, init_points] = CreatePointCuboid(8'000'000, 1.0);
-  const GpuVector<Pointd> points = init_points;
+  const GpuVector<Vectord> points = init_points;
   for (auto _ : state) {
     auto [index_map, morton_points] =
         MortonPoints<Morton32>::Create(2. * 1.2 * dr, points);

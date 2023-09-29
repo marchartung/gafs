@@ -2,12 +2,13 @@
 
 #include <cstdint>
 
+#include "utils/array.hpp"
 #include "utils/macros.hpp"
 #include "utils/types.hpp"
 
 class Morton64 {
  public:
-  using Coord = uint32_t;
+  using Coord = int32_t;
   using Coords = const Array<Coord, 3>;
   using morton = uint64_t;
 
@@ -17,6 +18,9 @@ class Morton64 {
 
   INLINE Morton64(const Coord x, const Coord y, const Coord z)
       : Morton64(std::array<Coord, 3>{x, y, z}) {}
+
+  Morton64(const double cell_size, const Vectord p)
+      : Morton64(p[0] / cell_size, p[1] / cell_size, p[2] / cell_size) {}
 
   INLINE Coords coords() const { return Decode(value_); }
   INLINE morton value() const { return value_; }
@@ -85,7 +89,7 @@ class Morton64 {
 class Morton32 {
  public:
   using Coord = uint16_t;
-  using Coords = const Vector3T<Coord>;
+  using Coords = const Array<Coord, 3>;
   using morton = uint32_t;
 
   Morton32() = default;
@@ -180,9 +184,9 @@ class Morton32 {
   morton value_;
 };
 
-template <typename morton_type = Morton64>
+template <typename morton_type = Morton64, typename IndexType = uint32_t>
 struct MortIdx {
-  using size_type = uint32_t;
+  using size_type = IndexType;
   morton_type morton;
   size_type idx;
   DEVICE bool operator==(const MortIdx<morton_type> in) const {

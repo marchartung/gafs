@@ -50,8 +50,8 @@ VtkHelper::ToVtk<uint32_t>(const std::string& field_name,
 
 template<>
 vtkSmartPointer<vtkAbstractArray>
-VtkHelper::ToVtk<Pointd>(const std::string& field_name,
-                         const Pointd* field, const size_t n)
+VtkHelper::ToVtk<Vectord>(const std::string& field_name,
+                         const Vectord* field, const size_t n)
 {
   auto array_tmp = vtkSmartPointer<vtkDoubleArray>::New();
   array_tmp->SetName(field_name.c_str());
@@ -63,8 +63,8 @@ VtkHelper::ToVtk<Pointd>(const std::string& field_name,
 }
 template<>
 vtkSmartPointer<vtkAbstractArray>
-VtkHelper::ToVtk<Pointf>(const std::string& field_name,
-                         const Pointf* field, const size_t n)
+VtkHelper::ToVtk<Vectorf>(const std::string& field_name,
+                         const Vectorf* field, const size_t n)
 {
   auto array_tmp = vtkSmartPointer<vtkFloatArray>::New();
   array_tmp->SetName(field_name.c_str());
@@ -117,15 +117,15 @@ VtkHelper::FromVtk<uint32_t>(vtkAbstractArray* in_array)
 }
 
 template<>
-std::vector<Pointd>
-VtkHelper::FromVtk<Pointd>(vtkAbstractArray* in_array)
+std::vector<Vectord>
+VtkHelper::FromVtk<Vectord>(vtkAbstractArray* in_array)
 {
   const size_t num_values = in_array->GetNumberOfTuples();
   vtkSmartPointer<vtkDoubleArray> array =
     vtkDoubleArray::SafeDownCast(in_array);
-  std::vector<Pointd> res(num_values);
+  std::vector<Vectord> res(num_values);
   for (size_t i = 0; i < num_values; ++i) {
-    res[i] = Pointd{
+    res[i] = Vectord{
       { array->GetTuple3(i)[0], array->GetTuple3(i)[1], array->GetTuple3(i)[2] }
     };
   }
@@ -133,14 +133,14 @@ VtkHelper::FromVtk<Pointd>(vtkAbstractArray* in_array)
 }
 
 template<>
-std::vector<Pointf>
-VtkHelper::FromVtk<Pointf>(vtkAbstractArray* in_array)
+std::vector<Vectorf>
+VtkHelper::FromVtk<Vectorf>(vtkAbstractArray* in_array)
 {
   const size_t num_values = in_array->GetNumberOfTuples();
   vtkSmartPointer<vtkFloatArray> array = vtkFloatArray::SafeDownCast(in_array);
-  std::vector<Pointf> res(num_values);
+  std::vector<Vectorf> res(num_values);
   for (size_t i = 0; i < num_values; ++i) {
-    res[i] = Pointf{ { static_cast<float>(array->GetTuple3(i)[0]),
+    res[i] = Vectorf{ { static_cast<float>(array->GetTuple3(i)[0]),
                        static_cast<float>(array->GetTuple3(i)[1]),
                        static_cast<float>(array->GetTuple3(i)[2]) } };
   }

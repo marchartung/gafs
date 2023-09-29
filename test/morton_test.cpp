@@ -49,15 +49,15 @@ TEST(AlgoMorton, Compare32) {
 TEST(AlgoMorton, MortonPoints32) {
   using morton_type = Morton32;
   constexpr double e = 1.e-7;
-  const std::vector<Pointd> points = {
-      Pointd(4., 1., 140.),    Pointd(0.1, 0.2, 0.3),
-      Pointd(646., 2., 0.),    Pointd(0.5, 0.4, 0.3),
-      Pointd(344., 3., 124.),  Pointd(0.6, 0.7, 0.43545543),
-      Pointd(577., 4., 124.),  Pointd(0.6644, 0.34234, 0.5431),
-      Pointd(765., 5., 3.),    Pointd(0., 0.67685, 0.354536),
-      Pointd(455., 50., 1.),   Pointd(0.574334, 0.7645, 0.75777),
-      Pointd(44., 100., 234.), Pointd(0.4444, 0.55555, 0.777777),
-      Pointd(1., 1000., 1.),   Pointd(0.324433243423, 0.2243, 0.334)};
+  const std::vector<Vectord> points = {
+      Vectord(4., 1., 140.),    Vectord(0.1, 0.2, 0.3),
+      Vectord(646., 2., 0.),    Vectord(0.5, 0.4, 0.3),
+      Vectord(344., 3., 124.),  Vectord(0.6, 0.7, 0.43545543),
+      Vectord(577., 4., 124.),  Vectord(0.6644, 0.34234, 0.5431),
+      Vectord(765., 5., 3.),    Vectord(0., 0.67685, 0.354536),
+      Vectord(455., 50., 1.),   Vectord(0.574334, 0.7645, 0.75777),
+      Vectord(44., 100., 234.), Vectord(0.4444, 0.55555, 0.777777),
+      Vectord(1., 1000., 1.),   Vectord(0.324433243423, 0.2243, 0.334)};
   auto [index_map_gpu, mp_gpu] = MortonPoints<morton_type>::Create(1., points);
 
   ASSERT_EQ(index_map_gpu.size(), points.size());
@@ -71,7 +71,7 @@ TEST(AlgoMorton, MortonPoints32) {
     once[index_map[i]] = true;
   }
 
-  CpuVector<Pointd> rpoints = mp_gpu.pointds();
+  CpuVector<Vectord> rpoints = mp_gpu.Vectords();
   ASSERT_EQ(rpoints.size(), points.size());
   for (size_t i = 0; i < points.size(); ++i) {
     const size_t old_idx = index_map[i];
@@ -87,15 +87,15 @@ TEST(AlgoMorton, MortonPoints32) {
 TEST(AlgoMorton, MortonPoints64) {
   using morton_type = Morton64;
   constexpr double e = 1.e-7;
-  const std::vector<Pointd> points = {
-      Pointd(4., 1., 121240.),     Pointd(0.1, 0.2, 0.3),
-      Pointd(65346., 2., 0.),      Pointd(0.5, 0.4, 0.3),
-      Pointd(3444., 3., 124.),     Pointd(0.6, 0.7, 0.43545543),
-      Pointd(432577., 4., 12424.), Pointd(0.6644, 0.34234, 0.5431),
-      Pointd(756665., 5., 3.),     Pointd(0., 0.67685, 0.354536),
-      Pointd(45665., 50., 1.),     Pointd(0.574334, 0.7645, 0.75777),
-      Pointd(44., 100., 234.),     Pointd(0.4444, 0.55555, 0.777777),
-      Pointd(1., 10000., 1.),      Pointd(0.324433243423, 0.2243, 0.334)};
+  const std::vector<Vectord> points = {
+      Vectord(4., 1., 121240.),     Vectord(0.1, 0.2, 0.3),
+      Vectord(65346., 2., 0.),      Vectord(0.5, 0.4, 0.3),
+      Vectord(3444., 3., 124.),     Vectord(0.6, 0.7, 0.43545543),
+      Vectord(432577., 4., 12424.), Vectord(0.6644, 0.34234, 0.5431),
+      Vectord(756665., 5., 3.),     Vectord(0., 0.67685, 0.354536),
+      Vectord(45665., 50., 1.),     Vectord(0.574334, 0.7645, 0.75777),
+      Vectord(44., 100., 234.),     Vectord(0.4444, 0.55555, 0.777777),
+      Vectord(1., 10000., 1.),      Vectord(0.324433243423, 0.2243, 0.334)};
   auto [index_map_gpu, mp_gpu] = MortonPoints<morton_type>::Create(1., points);
 
   ASSERT_EQ(index_map_gpu.size(), points.size());
@@ -109,7 +109,7 @@ TEST(AlgoMorton, MortonPoints64) {
     once[index_map[i]] = true;
   }
 
-  CpuVector<Pointd> rpoints = mp_gpu.pointds();
+  CpuVector<Vectord> rpoints = mp_gpu.Vectords();
   ASSERT_EQ(rpoints.size(), points.size());
   for (size_t i = 0; i < points.size(); ++i) {
     const size_t old_idx = index_map[i];
@@ -125,29 +125,29 @@ TEST(AlgoMorton, MortonPoints64) {
 TEST(MortonOctree, test_create32) {
   using morton_type = Morton32;
   const double cell_size = 1.;
-  const std::vector<Pointd> init_points = {
-      Pointd(2., 1., 1.),    Pointd(1., 1., 1.),
-      Pointd(1., 1, 2),      Pointd(1., 2., 1.),
-      Pointd(1, 2, 2),       Pointd(2, 1, 1.),
-      Pointd(2., 1., 2),     Pointd(0., 0., 0.),
-      Pointd(1., 0., 0.),    Pointd(1., 1, 0),
-      Pointd(1., 0., 1.),    Pointd(1, 1, 1),
-      Pointd(0, 1, 1.),      Pointd(2., 1., 2),
-      Pointd(4., 1., 120.),  Pointd(0.1, 0.2, 0.3),
-      Pointd(646., 2., 0.),  Pointd(0.5, 0.4, 0.3),
-      Pointd(34., 3., 124.), Pointd(0.6, 0.7, 0.43545543),
-      Pointd(47., 4., 424.), Pointd(0.6644, 0.34234, 0.5431),
-      Pointd(65., 5., 3.),   Pointd(0., 0.67685, 0.354536),
-      Pointd(456., 50., 1.), Pointd(0.574334, 0.7645, 0.75777),
-      Pointd(44., 10., 34.), Pointd(0.4444, 0.55555, 0.777777),
-      Pointd(1., 10., 1.),   Pointd(0.324433243423, 0.2243, 0.334)};
+  const std::vector<Vectord> init_points = {
+      Vectord(2., 1., 1.),    Vectord(1., 1., 1.),
+      Vectord(1., 1, 2),      Vectord(1., 2., 1.),
+      Vectord(1, 2, 2),       Vectord(2, 1, 1.),
+      Vectord(2., 1., 2),     Vectord(0., 0., 0.),
+      Vectord(1., 0., 0.),    Vectord(1., 1, 0),
+      Vectord(1., 0., 1.),    Vectord(1, 1, 1),
+      Vectord(0, 1, 1.),      Vectord(2., 1., 2),
+      Vectord(4., 1., 120.),  Vectord(0.1, 0.2, 0.3),
+      Vectord(646., 2., 0.),  Vectord(0.5, 0.4, 0.3),
+      Vectord(34., 3., 124.), Vectord(0.6, 0.7, 0.43545543),
+      Vectord(47., 4., 424.), Vectord(0.6644, 0.34234, 0.5431),
+      Vectord(65., 5., 3.),   Vectord(0., 0.67685, 0.354536),
+      Vectord(456., 50., 1.), Vectord(0.574334, 0.7645, 0.75777),
+      Vectord(44., 10., 34.), Vectord(0.4444, 0.55555, 0.777777),
+      Vectord(1., 10., 1.),   Vectord(0.324433243423, 0.2243, 0.334)};
 
   const auto [index_map, mp] =
       MortonPoints<morton_type>::Create(cell_size, init_points);
-  const CpuVector<Pointd> points = mp.pointds();
+  const CpuVector<Vectord> points = mp.Vectords();
 
   MortonOctree<morton_type> oct(mp.cell_mortons());
-  for (const Pointd& p : points) {
+  for (const Vectord& p : points) {
     auto c = Cast<morton_type::Coord>(p / cell_size);
     morton_type m(c);
     const size_t cid = oct[m];
@@ -164,29 +164,29 @@ TEST(MortonOctree, test_create32) {
 TEST(MortonOctree, test_create64) {
   using morton_type = Morton64;
   const double cell_size = 1.;
-  const CpuVector<Pointd> init_points = {
-      Pointd(2., 1., 1.),    Pointd(1., 1., 1.),
-      Pointd(1., 1, 2),      Pointd(1., 2., 1.),
-      Pointd(1, 2, 2),       Pointd(2, 1, 1.),
-      Pointd(2., 1., 2),     Pointd(0., 0., 0.),
-      Pointd(1., 0., 0.),    Pointd(1., 1, 0),
-      Pointd(1., 0., 1.),    Pointd(1, 1, 1),
-      Pointd(0, 1, 1.),      Pointd(2., 1., 2),
-      Pointd(4., 1., 120.),  Pointd(0.1, 0.2, 0.3),
-      Pointd(646., 2., 0.),  Pointd(0.5, 0.4, 0.3),
-      Pointd(34., 3., 124.), Pointd(0.6, 0.7, 0.43545543),
-      Pointd(47., 4., 424.), Pointd(0.6644, 0.34234, 0.5431),
-      Pointd(65., 5., 3.),   Pointd(0., 0.67685, 0.354536),
-      Pointd(456., 50., 1.), Pointd(0.574334, 0.7645, 0.75777),
-      Pointd(44., 10., 34.), Pointd(0.4444, 0.55555, 0.777777),
-      Pointd(1., 10., 1.),   Pointd(0.324433243423, 0.2243, 0.334)};
+  const CpuVector<Vectord> init_points = {
+      Vectord(2., 1., 1.),    Vectord(1., 1., 1.),
+      Vectord(1., 1, 2),      Vectord(1., 2., 1.),
+      Vectord(1, 2, 2),       Vectord(2, 1, 1.),
+      Vectord(2., 1., 2),     Vectord(0., 0., 0.),
+      Vectord(1., 0., 0.),    Vectord(1., 1, 0),
+      Vectord(1., 0., 1.),    Vectord(1, 1, 1),
+      Vectord(0, 1, 1.),      Vectord(2., 1., 2),
+      Vectord(4., 1., 120.),  Vectord(0.1, 0.2, 0.3),
+      Vectord(646., 2., 0.),  Vectord(0.5, 0.4, 0.3),
+      Vectord(34., 3., 124.), Vectord(0.6, 0.7, 0.43545543),
+      Vectord(47., 4., 424.), Vectord(0.6644, 0.34234, 0.5431),
+      Vectord(65., 5., 3.),   Vectord(0., 0.67685, 0.354536),
+      Vectord(456., 50., 1.), Vectord(0.574334, 0.7645, 0.75777),
+      Vectord(44., 10., 34.), Vectord(0.4444, 0.55555, 0.777777),
+      Vectord(1., 10., 1.),   Vectord(0.324433243423, 0.2243, 0.334)};
 
   const auto [index_map, mp] =
       MortonPoints<morton_type>::Create(cell_size, init_points);
-  const CpuVector<Pointd> points = mp.pointds();
+  const CpuVector<Vectord> points = mp.Vectords();
 
   MortonOctree<morton_type> oct(mp.cell_mortons());
-  for (const Pointd& p : points) {
+  for (const Vectord& p : points) {
     auto c = Cast<morton_type::Coord>(p / cell_size);
     morton_type m(c);
     const size_t cid = oct[m];

@@ -8,7 +8,7 @@
 class DynamicBoundary {
  public:
   DynamicBoundary() = default;
-  DynamicBoundary(const MaterialSettings& s, std::vector<Pointd> pos)
+  DynamicBoundary(const MaterialSettings& s, std::vector<Vectord> pos)
       : ref_density_(s.ref_density),
         speed_of_sound_(s.speed_of_sound),
         h_(s.dr * s.smoothing_ratio),
@@ -19,15 +19,15 @@ class DynamicBoundary {
 
   size_t size() const { return pos_.size(); }
 
-  const std::vector<Pointd>& pos() const { return pos_; }
-  const Pointd& pos(const size_t idx) const { return pos_[idx]; }
-  Pointd& pos(const size_t idx) { return pos_[idx]; }
+  const std::vector<Vectord>& pos() const { return pos_; }
+  const Vectord& pos(const size_t idx) const { return pos_[idx]; }
+  Vectord& pos(const size_t idx) { return pos_[idx]; }
 
   const std::vector<double>& dty() const { return dty_; }
   const double& dty(const size_t idx) const { return dty_[idx]; }
   double& dty(const size_t idx) { return dty_[idx]; }
 
-  const Pointd& vel(const size_t idx) const { return vel_; }
+  const Vectord& vel(const size_t idx) const { return vel_; }
 
   double ref_density() const { return ref_density_; }
   double sos() const { return speed_of_sound_; }
@@ -40,8 +40,8 @@ class DynamicBoundary {
   double h_;
   double mass_;
 
-  std::vector<Pointd> pos_;
+  std::vector<Vectord> pos_;
   std::vector<double> dty_;
 
-  Pointd vel_;
+  Vectord vel_;
 };

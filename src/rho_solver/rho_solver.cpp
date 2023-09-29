@@ -3,15 +3,17 @@
 #include <string>
 #include <vector>
 
+#include "akinci_solver.hpp"
 #include "basic_equations.hpp"
 #include "dynamic_boundary.hpp"
 #include "file/vtp.hpp"
 #include "materials.hpp"
-#include "neighbor.hpp"
 #include "particles.hpp"
 #include "preprocess/point_shapes.hpp"
-#include "std_rhs.hpp"
 #include "utils/types.hpp"
+#include "volume_boundary.hpp"
+
+std::string base_path = "/home/marc/colliding_cubes_no_shifting";
 
 void Write(const size_t output_num, const Particles& p) {
   VTP vtp;
@@ -20,54 +22,59 @@ void Write(const size_t output_num, const Particles& p) {
   vtp.AddPointData("density", p.dty().data(), p.size());
 
   const std::filesystem::path path =
-      "/home/marc/test/fluid_cube_" + std::to_string(output_num) + ".vtp";
+      base_path + "/fluid_" + std::to_string(output_num) + ".vtp";
   vtp.Export(path);
 }
 
 void Write(const size_t output_num, const DynamicBoundary& b) {
-  VTP vtp;
-  vtp.SetPoints(b.pos());
-  vtp.AddPointData("density", b.dty().data(), b.size());
-  const std::filesystem::path path =
-      "/home/marc/test/wall_cube_" + std::to_string(output_num) + ".vtp";
-  vtp.Export(path);
+  // VTP vtp;
+  // vtp.SetPoints(b.pos());
+  // vtp.AddPointData("density", b.dty().data(), b.size());
+  // const std::filesystem::path path =
+  //     base_path + "/wall_cube_" + std::to_string(output_num) + ".vtp";
+  // vtp.Export(path);
 }
 
-Particles CreateParticles(const MaterialSettings& settings) {
-  return Particles(settings,
-                   PointDiscretize::Cube(settings.dr, Pointd(1.), Pointd(0.)));
+void Write(const size_t output_num, const VolumeBoundary& b) {
+  // VTP vtp;
+  // vtp.SetPoints(b.pos());
+  // vtp.AddPointData("volume", b.vol().data(), b.size());
+  // const std::filesystem::path path =
+  //     base_path + "/wall_plane_" + std::to_string(output_num) + ".vtp";
+  // vtp.Export(path);
 }
 
-DynamicBoundary CreateBoundary(const double thickness,
-                               const MaterialSettings& settings) {
-  return DynamicBoundary(
-      settings, PointDiscretize::Cube(
-                    settings.dr, Pointd(2., 2., thickness),
-                    Pointd(-0.5, -0.5, -thickness - settings.dr * 0.5)));
+Particles CreateParticles(MaterialSettings settings) {
+  const double droplet_d = 0.00121, rel_vel = 5.13;
+  settings.dr = droplet_d / 20.;
+  settings.speed_of_sound = 2. * 10. * rel_vel;
+  auto pos = Vectordiscretize::Ellipsoid(settings.dr, Vectord(droplet_d),
+                                         Vectord(-0.5 * droplet_d, 0., 0.));
+  const size_t n1 = pos.size();
+  auto pos2 = Vectordiscretize::Ellipsoid(settings.dr, Vectord(droplet_d),
+                                          Vectord(0.5 * droplet_d, 0., 0.));
+  pos.insert(pos.end(), pos2.begin(), pos2.end());
+  std::vector<Vectord> vel(pos.size());
+  std::fill(vel.begin(), vel.begin() + n1, Vectord{rel_vel / 2., 0., 0.});
+  std::fill(vel.begin() + n1, vel.end(), Vectord{-rel_vel / 2., 0., 0.});
+  Particles p(settings, std::move(pos), std::move(vel),
+              std::vector<double>(2 * n1, settings.ref_density));
+  Write(0, p);
+  return p;
 }
 
 int main() {
-  Particles p = CreateParticles(MaterialSettings::Water());
-  DynamicBoundary b = CreateBoundary(2. * p.h(), MaterialSettings::Wall());
-  BasicWSphRhs rhs(Pointd{0., 0., -9.8});
+  std::filesystem::create_directories(base_path);
+  const size_t num_outputs = 500;
+  const double end_time = 0.002, dt = end_time / num_outputs;
+  AkinciSolver s(Vectord{0., 0., 0.},
+                 CreateParticles(MaterialSettings::Water()), VolumeBoundary());
 
-  rhs.ComputeDensityWall(p, b);
-
-  Write(0, p);
-  Write(0, b);
-
-  const size_t num_sub_steps = 100, num_outputs = 100;
-  const double end_time = 1.;
-  const double dt = end_time / num_outputs;
-  std::cout << "dt: " << dt / num_sub_steps << "\n";
+  Write(0, s.particles());
   for (size_t output = 1; output <= num_outputs; ++output) {
-    for (size_t sub_step = 0; sub_step < num_sub_steps; ++sub_step) {
-      rhs.Compute(p, b);
-      rhs.Update(dt / num_sub_steps, p, b);
-    }
-    std::cout << "writing output " << output << std::endl;
-    Write(output, p);
-    Write(output, b);
+    const double ave_dt = s.TimeStep(dt);
+    Write(output, s.particles());
+    std::cout << "wrote output " << output << std::endl;
   }
 
   return 0;

@@ -15,7 +15,7 @@ class MortonPoints {
   using Range = std::tuple<size_type, size_type>;
 
   static std::tuple<GpuVector<size_type>, MortonPoints> Create(
-      const double cell_size, const GpuVector<Pointd>& points);
+      const double cell_size, const GpuVector<Vectord>& points);
 
   MortonPoints() = default;
 
@@ -28,18 +28,18 @@ class MortonPoints {
 
   const GpuVector<size_type>& cell_point_starts() const { return cell_starts_; }
 
-  const GpuVector<Pointf>& pointfs() const { return points_; }
-  GpuVector<Pointf>& pointfs() { return points_; }
+  const GpuVector<Vectorf>& Vectorfs() const { return points_; }
+  GpuVector<Vectorf>& Vectorfs() { return points_; }
 
-  GpuVector<Pointd> pointds() const;
+  GpuVector<Vectord> Vectords() const;
 
  private:
-  MortonPoints(const double cell_size, GpuVector<Pointf> points,
+  MortonPoints(const double cell_size, GpuVector<Vectorf> points,
                GpuVector<morton_type> cell_mortons,
                GpuVector<size_type> cell_starts);
 
   double cell_size_;
-  GpuVector<Pointf> points_;
+  GpuVector<Vectorf> points_;
   GpuVector<morton_type> cell_mortons_;
   GpuVector<size_type> cell_starts_;
 };

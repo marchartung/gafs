@@ -9,27 +9,27 @@
 #include "utils/types.hpp"
 
 template <typename MortonType>
-std::tuple<GpuVector<Pointf>, GpuVector<MortonType>> CreateCellRefPoints(
-    const double cell_size, const GpuVector<Pointd> &points) {
+std::tuple<GpuVector<Vectorf>, GpuVector<MortonType>> CreateCellRefPoints(
+    const double cell_size, const GpuVector<Vectord> &points) {
   const double offset = 0.5 * cell_size;
-  GpuVector<Pointf> gpu_pointfs(points.size());
+  GpuVector<Vectorf> gpu_Vectorfs(points.size());
   GpuVector<MortonType> gpu_point_mortons(points.size());
   ForEachIndex(
       points.size(),
-      [offset, cell_size](const size_t i, const Pointd *pd, Pointf *pf,
+      [offset, cell_size](const size_t i, const Vectord *pd, Vectorf *pf,
                           MortonType *mortons) {
         const auto coords =
             Cast<typename MortonType::Coords::value_type>(pd[i] / cell_size);
         mortons[i] = MortonType(coords);
         pf[i] = Cast<float>(pd[i] - Cast<double>(coords) * cell_size + offset);
       },
-      points, gpu_pointfs, gpu_point_mortons);
-  return std::make_tuple(std::move(gpu_pointfs), std::move(gpu_point_mortons));
+      points, gpu_Vectorfs, gpu_point_mortons);
+  return std::make_tuple(std::move(gpu_Vectorfs), std::move(gpu_point_mortons));
 }
 
 template <typename morton_type>
 MortonPoints<morton_type>::MortonPoints(const double cell_size,
-                                        GpuVector<Pointf> points,
+                                        GpuVector<Vectorf> points,
                                         GpuVector<morton_type> cell_mortons,
                                         GpuVector<size_type> cell_starts)
     : cell_size_(cell_size),
@@ -41,7 +41,7 @@ template <typename morton_type>
 std::tuple<GpuVector<typename MortonPoints<morton_type>::size_type>,
            MortonPoints<morton_type>>
 MortonPoints<morton_type>::Create(const double cell_size,
-                                  const GpuVector<Pointd> &points) {
+                                  const GpuVector<Vectord> &points) {
   auto [unordered_gpu_points, point_mortons] =
       CreateCellRefPoints<morton_type>(cell_size, points);
   GpuVector<mort_id_t> mort_ids(points.size());
@@ -81,11 +81,11 @@ MortonPoints<morton_type>::Create(const double cell_size,
       },
       mort_ids, cell_starts, cell_mortons);
 
-  GpuVector<Pointf> gpu_points(points.size());
+  GpuVector<Vectorf> gpu_points(points.size());
   ForEachIndex(
       points.size(),
-      [](const size_type i, const size_type *map, const Pointf *p_src,
-         Pointf *p_trg) {
+      [](const size_type i, const size_type *map, const Vectorf *p_src,
+         Vectorf *p_trg) {
         const size_type idx = map[i];
         p_trg[i] = p_src[idx];
       },
@@ -97,17 +97,17 @@ MortonPoints<morton_type>::Create(const double cell_size,
 }
 
 template <typename morton_type>
-GpuVector<Pointd> MortonPoints<morton_type>::pointds() const {
+GpuVector<Vectord> MortonPoints<morton_type>::Vectords() const {
   const double cell_size = cell_size_;
   const double cell_center_offset(0.5 * cell_size_);
-  GpuVector<Pointd> res(points_.size());
+  GpuVector<Vectord> res(points_.size());
   ForEachIndex(
       num_cells(),
       [cell_center_offset, cell_size](
           const size_type i, const morton_type *cell_mortons,
-          const size_type *cell_starts, const Pointf *points, Pointd *res) {
+          const size_type *cell_starts, const Vectorf *points, Vectord *res) {
         const auto coords = cell_mortons[i].coords();
-        const Pointd cell_offset = Cast<double>(coords) * cell_size;
+        const Vectord cell_offset = Cast<double>(coords) * cell_size;
         for (size_type j = cell_starts[i]; j < cell_starts[i + 1]; ++j) {
           res[j] = (Cast<double>(points[j]) - cell_center_offset) + cell_offset;
         }

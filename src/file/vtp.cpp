@@ -8,7 +8,7 @@
 #include <vtkXMLPolyDataWriter.h>
 
 void
-VTP::SetPoints(const std::vector<Pointd>& field)
+VTP::SetPoints(const std::vector<Vectord>& field)
 {
   auto vtk_points = vtkSmartPointer<vtkPoints>::New();
   vtk_points->SetDataTypeToDouble();
@@ -23,7 +23,7 @@ VTP::SetPoints(const std::vector<Pointd>& field)
 }
 
 void
-VTP::SetMesh(const std::vector<Pointd>& points,
+VTP::SetMesh(const std::vector<Vectord>& points,
              const std::vector<Array<uint32_t, 3>>& segments)
 {
   auto vtksegments = vtkSmartPointer<vtkCellArray>::New();
@@ -51,10 +51,10 @@ VTP::Export(const std::filesystem::path& file_path)
   writer->Write();
 }
 
-std::vector<Pointd>
+std::vector<Vectord>
 VTP::GetPoints()
 {
-  std::vector<Pointd> points;
+  std::vector<Vectord> points;
   auto vtk_points = polydata_->GetPoints();
   points.resize(vtk_points->GetNumberOfPoints());
   for (size_t i = 0; i < points.size(); ++i) {
@@ -63,11 +63,11 @@ VTP::GetPoints()
   return points;
 }
 
-std::tuple<std::vector<Pointd>, std::vector<Array<uint32_t, 3>>>
+std::tuple<std::vector<Vectord>, std::vector<Array<uint32_t, 3>>>
 VTP::GetMesh()
 {
   vtkPoints* vtkpoints = polydata_->GetPoints();
-  std::vector<Pointd> points(vtkpoints->GetNumberOfPoints());
+  std::vector<Vectord> points(vtkpoints->GetNumberOfPoints());
   for (size_t i = 0; i < points.size(); ++i)
     vtkpoints->GetPoint(i, points[i].data());
 
