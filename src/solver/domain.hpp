@@ -22,18 +22,20 @@
 
 #pragma once
 
-#include <vtkAbstractArray.h>
-#include <vtkSmartPointer.h>
+#include "neighbor/saved_neighbors.hpp"
+#include "particles.hpp"
+#include "volume_boundary.hpp"
 
-#include <string>
+struct Domain {
+  Domain(Particles p_in) : p(std::move(p_in)), p_p_neighbors(p.pos()) {}
 
-class VtkHelper {
- public:
-  template <typename T>
-  static vtkSmartPointer<vtkAbstractArray> ToVtk(const std::string& field_name,
-                                                 const T* field,
-                                                 const size_t n);
+  void Update() {
+    p.Update();
+    p_p_neighbors.Update(p.pos());
+  }
 
-  template <typename T>
-  static std::vector<T> FromVtk(vtkAbstractArray* array);
+  Particles p;
+  SavedNeighborsD p_p_neighbors;
+
+  VolumeBoundary vb;
 };

@@ -22,18 +22,40 @@
 
 #pragma once
 
-#include <vtkAbstractArray.h>
-#include <vtkSmartPointer.h>
+#include <vector>
 
-#include <string>
+#include "domain.hpp"
+#include "particles.hpp"
+#include "utils/types.hpp"
 
-class VtkHelper {
+struct Derivative {
+  SizeT size() const { return acc.size(); }
+
+  void Resize(const size_t n) {
+    acc.resize(n);
+    dtyD.resize(n);
+  }
+
+  void Step(const double dt, const Vectord gravity, Particles& p);
+
+  std::vector<Vectord> acc;
+  std::vector<double> dtyD;
+};
+
+class BasicWeaklyRhs {
  public:
-  template <typename T>
-  static vtkSmartPointer<vtkAbstractArray> ToVtk(const std::string& field_name,
-                                                 const T* field,
-                                                 const size_t n);
+  BasicWeaklyRhs() = default;
+  BasicWeaklyRhs(const double cfl) : cfl_(cfl) {}
 
-  template <typename T>
-  static std::vector<T> FromVtk(vtkAbstractArray* array);
+  double cfl() const { return cfl_; }
+
+  void Compute(const Domain& d, Derivative& res);
+  double ComputeMaxDt(const Domain& d, const Derivative& derivative);
+
+ private:
+  double CourantViscDt(const Particles& p, const SavedNeighborsD& neighbors);
+
+  double ForceDt(const double h, const Derivative& d);
+
+  double cfl_ = 1.1;
 };

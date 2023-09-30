@@ -22,18 +22,13 @@
 
 #pragma once
 
-#include <vtkAbstractArray.h>
-#include <vtkSmartPointer.h>
+#include "basic_equations.hpp"
+#include "domain.hpp"
 
-#include <string>
+// TODO 2021 Implement from Jandaghian et al: Stability and accuracy of the
+// weakly compressible SPH with particle regularization techniques
 
-class VtkHelper {
+class DpcShifting {
  public:
-  template <typename T>
-  static vtkSmartPointer<vtkAbstractArray> ToVtk(const std::string& field_name,
-                                                 const T* field,
-                                                 const size_t n);
-
-  template <typename T>
-  static std::vector<T> FromVtk(vtkAbstractArray* array);
+ private:
 };

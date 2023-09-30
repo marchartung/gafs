@@ -20,20 +20,14 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#pragma once
+#include "basic_equations.hpp"
 
-#include <vtkAbstractArray.h>
-#include <vtkSmartPointer.h>
-
-#include <string>
-
-class VtkHelper {
- public:
-  template <typename T>
-  static vtkSmartPointer<vtkAbstractArray> ToVtk(const std::string& field_name,
-                                                 const T* field,
-                                                 const size_t n);
-
-  template <typename T>
-  static std::vector<T> FromVtk(vtkAbstractArray* array);
-};
+std::vector<double> ComputePressure(const std::vector<double>& density,
+                                    const double ref_density,
+                                    const double pressure_parameter) {
+  std::vector<double> pressure(density.size());
+  for (size_t i = 0; i < pressure.size(); ++i) {
+    pressure[i] = ComputePressure(density[i], ref_density, pressure_parameter);
+  }
+  return pressure;
+}

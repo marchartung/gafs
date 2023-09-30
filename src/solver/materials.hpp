@@ -22,18 +22,19 @@
 
 #pragma once
 
-#include <vtkAbstractArray.h>
-#include <vtkSmartPointer.h>
+#include "utils/types.hpp"
 
-#include <string>
+struct MaterialSettings {
+  double ref_density = 1000.;
+  double speed_of_sound = 50.;
+  double smoothing_ratio = 1.5;
+  double dr = 0.00121 / 20.;
 
-class VtkHelper {
- public:
-  template <typename T>
-  static vtkSmartPointer<vtkAbstractArray> ToVtk(const std::string& field_name,
-                                                 const T* field,
-                                                 const size_t n);
-
-  template <typename T>
-  static std::vector<T> FromVtk(vtkAbstractArray* array);
+  static MaterialSettings Water() { return MaterialSettings(); }
+  static MaterialSettings Wall() {
+    // return MaterialSettings();
+    MaterialSettings res;
+    res.dr = res.dr / 2.;
+    return res;
+  }
 };

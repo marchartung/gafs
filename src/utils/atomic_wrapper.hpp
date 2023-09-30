@@ -1,34 +1,47 @@
+// MIT License
+
+// Copyright (c) 2023 Marc Hartung
+
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
+
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+// SOFTWARE.
+
 #include <atomic>
 
-template<typename T>
-class AtomicWrapper
-{
-public:
+template <typename T>
+class AtomicWrapper {
+ public:
   AtomicWrapper() = default;
-  AtomicWrapper(T&& value)
-  {
+  AtomicWrapper(T&& value) {
     value_.store(std::forward<T>(value), std::memory_order_relaxed);
   }
   AtomicWrapper(const AtomicWrapper<T>& v)
-    : AtomicWrapper<T>(v.load(std::memory_order_relaxed))
-  {
-  }
+      : AtomicWrapper<T>(v.load(std::memory_order_relaxed)) {}
   AtomicWrapper(AtomicWrapper<T>&& v)
-    : AtomicWrapper<T>(v.load(std::memory_order_relaxed))
-  {
-  }
-  AtomicWrapper& operator=(T&& val)
-  {
+      : AtomicWrapper<T>(v.load(std::memory_order_relaxed)) {}
+  AtomicWrapper& operator=(T&& val) {
     value_.store(std::forward<T>(val), std::memory_order_relaxed);
     return *this;
   }
-  AtomicWrapper& operator=(const AtomicWrapper<T>& val)
-  {
+  AtomicWrapper& operator=(const AtomicWrapper<T>& val) {
     *this = val.load(std::memory_order_relaxed);
     return *this;
   }
-  AtomicWrapper& operator=(AtomicWrapper<T>&& val)
-  {
+  AtomicWrapper& operator=(AtomicWrapper<T>&& val) {
     *this = val.load(std::memory_order_relaxed);
     return *this;
   }
@@ -36,21 +49,18 @@ public:
   ~AtomicWrapper() = default;
 
   void store(T&& value,
-             const std::memory_order order = std::memory_order_seq_cst)
-  {
+             const std::memory_order order = std::memory_order_seq_cst) {
     value_.store(std::forward<T>(value), order);
   }
 
-  T load(const std::memory_order order = std::memory_order_seq_cst) const
-  {
+  T load(const std::memory_order order = std::memory_order_seq_cst) const {
     return value_.load(order);
   }
 
-  bool compare_exchange_strong(T& expected, T desired)
-  {
+  bool compare_exchange_strong(T& expected, T desired) {
     return value_.compare_exchange_strong(expected, desired);
   }
 
-private:
+ private:
   std::atomic<T> value_;
 };

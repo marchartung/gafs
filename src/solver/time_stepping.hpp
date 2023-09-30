@@ -22,18 +22,50 @@
 
 #pragma once
 
-#include <vtkAbstractArray.h>
-#include <vtkSmartPointer.h>
+#include <vector>
 
-#include <string>
+#include "derivatives.hpp"
+#include "domain.hpp"
+#include "particles.hpp"
+#include "utils/types.hpp"
 
-class VtkHelper {
+struct BaseParticlesState {
+  std::vector<Vectord> pos;
+  std::vector<Vectord> vel;
+  std::vector<double> dty;
+
+  void Set(const Particles& p) {
+    pos = p.pos();
+    vel = p.vel();
+    dty = p.dty();
+  }
+};
+
+class ForwardEuler {
  public:
-  template <typename T>
-  static vtkSmartPointer<vtkAbstractArray> ToVtk(const std::string& field_name,
-                                                 const T* field,
-                                                 const size_t n);
+  ForwardEuler() = default;
+  ForwardEuler(const Vectord gravity) : gravity_(gravity) {}
 
-  template <typename T>
-  static std::vector<T> FromVtk(vtkAbstractArray* array);
+  void TimeStep(const double dt, Domain& d);
+
+ private:
+  Vectord gravity_ = Vectord(0.);
+  BasicWeaklyRhs rhs_ = BasicWeaklyRhs(0.9);
+  Derivative derivative_;
+};
+
+class DualSPHysicsVerletTS {
+ public:
+  DualSPHysicsVerletTS() = default;
+  DualSPHysicsVerletTS(const Vectord gravity) : gravity_(gravity) {}
+
+  void TimeStep(const double dt, Domain& d);
+
+ private:
+  void IntegrateFinalStep(const double dt, Domain& d);
+
+  Vectord gravity_;
+  BasicWeaklyRhs rhs_ = BasicWeaklyRhs(1.1);
+  BaseParticlesState init_state_;
+  Derivative derivative_;
 };

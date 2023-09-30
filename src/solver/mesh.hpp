@@ -22,18 +22,27 @@
 
 #pragma once
 
-#include <vtkAbstractArray.h>
-#include <vtkSmartPointer.h>
+#include <array>
+#include <vector>
 
-#include <string>
+#include "utils/types.hpp"
 
-class VtkHelper {
+using Segment = std::array<Vectord, 3>;
+
+class Mesh {
  public:
-  template <typename T>
-  static vtkSmartPointer<vtkAbstractArray> ToVtk(const std::string& field_name,
-                                                 const T* field,
-                                                 const size_t n);
+  Mesh() = default;
+  Mesh(std::vector<Vectord> points, std::vector<std::array<size_t, 3>> segments)
+      : points_(std::move(points)), segments_(std::move(segments)) {}
 
-  template <typename T>
-  static std::vector<T> FromVtk(vtkAbstractArray* array);
+  size_t size() const { return segments_.size(); }
+
+  Segment operator[](const size_t idx) const {
+    const auto s = segments_[idx];
+    return {points_[s[0]], points_[s[1]], points_[s[2]]};
+  }
+
+ private:
+  std::vector<Vectord> points_;
+  std::vector<std::array<size_t, 3>> segments_;
 };
