@@ -51,17 +51,19 @@ void DualSPHysicsVerletTS::TimeStep(const double dt, Domain& d) {
     rhs_.Compute(d, derivative_);
     const double sub_dt = std::min(rhs_.ComputeMaxDt(d, derivative_),
                                    std::max(dt - stepped_time, 1.e-14));
-
+    shifting_.Compute(d);
     init_state_.Set(d.p);
     derivative_.Step(sub_dt / 2., gravity_, d.p);
     rhs_.Compute(d, derivative_);
     IntegrateFinalStep(sub_dt, d);
+    shifting_.Apply(sub_dt, d);
     d.Update();
     stepped_time += sub_dt;
     ++num_steps;
   } while (stepped_time < dt);
 
   std::cout << "\navg dt: " << dt / num_steps << " | num steps: " << num_steps
+            << " | num neighbors: " << d.p.pos().UpdateVersion()
             << " | step time: "
             << 1000. * (omp_get_wtime() - t_start) / num_steps << "ms \n";
 }

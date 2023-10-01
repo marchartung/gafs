@@ -68,19 +68,18 @@ void Write(const size_t output_num, const VolumeBoundary& b) {
 }
 
 Particles CreateParticles(MaterialSettings settings) {
-  const double droplet_d = 0.005, rel_vel = 1.;
+  const double droplet_d = 0.005, rel_vel = 5.;
   settings.dr = droplet_d / 20.;
   settings.speed_of_sound = 2. * 10. * rel_vel;
   auto pos = Vectordiscretize::Ellipsoid(settings.dr, Vectord(droplet_d),
                                          Vectord(-0.5 * droplet_d, 0., 0.));
   const size_t n1 = pos.size();
-  auto pos2 = Vectordiscretize::Cube(
-      settings.dr, Vectord(2. * droplet_d, 5. * droplet_d, 5. * droplet_d),
-      Vectord(droplet_d, 0., 0.));
+  const auto pos2 = Vectordiscretize::Ellipsoid(
+      settings.dr, Vectord(droplet_d), Vectord(0.5 * droplet_d, 0., 0.));
   pos.insert(pos.end(), pos2.begin(), pos2.end());
   std::vector<Vectord> vel(pos.size(), Vectord(0.));
-  std::fill(vel.begin(), vel.begin() + n1, Vectord{rel_vel, 0., 0.});
-  // std::fill(vel.begin() + n1, vel.end(), Vectord{-rel_vel / 2., 0., 0.});
+  std::fill(vel.begin(), vel.begin() + n1, Vectord{rel_vel / 2, 0., 0.});
+  std::fill(vel.begin() + n1, vel.end(), Vectord{-rel_vel / 2., 0., 0.});
   Particles p(settings, std::move(pos), std::move(vel),
               std::vector<double>(pos.size(), settings.ref_density));
   Write(0, p);
@@ -93,11 +92,11 @@ Domain CreateDomain() {
 
 int main() {
   std::filesystem::create_directories(base_path);
-  const size_t num_outputs = 1600;
-  const double end_time = 0.1, dt = end_time / num_outputs;
+  const size_t num_outputs = 200;
+  const double end_time = 0.02, dt = end_time / num_outputs;
 
   Domain d = CreateDomain();
-  ForwardEuler ts(Vectord{0., 0., 0.});
+  DualSPHysicsVerletTS ts(Vectord{0., 0., 0.});
 
   Write(0, d.p);
   for (size_t output = 1; output <= num_outputs; ++output) {

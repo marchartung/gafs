@@ -169,6 +169,23 @@ std::ostream &operator<<(std::ostream &ous, const Array<T, N> &a) {
 }
 
 template <typename T, size_t N>
+DEVICE Array<T, N> Min(const Array<T, N> &a, const Array<T, N> &b) {
+  Array<T, N> res;
+  for (size_t i = 0; i < N; ++i) {
+    res[i] = std::min(a[i], b[i]);
+  }
+  return res;
+}
+template <typename T, size_t N>
+DEVICE Array<T, N> Max(const Array<T, N> &a, const Array<T, N> &b) {
+  Array<T, N> res;
+  for (size_t i = 0; i < N; ++i) {
+    res[i] = std::max(a[i], b[i]);
+  }
+  return res;
+}
+
+template <typename T, size_t N>
 DEVICE T Length(const Array<T, N> &v) {
   return std::sqrt(v * v);
 }

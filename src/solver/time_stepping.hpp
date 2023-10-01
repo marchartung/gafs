@@ -27,6 +27,7 @@
 #include "derivatives.hpp"
 #include "domain.hpp"
 #include "particles.hpp"
+#include "shifting.hpp"
 #include "utils/types.hpp"
 
 struct BaseParticlesState {
@@ -52,6 +53,7 @@ class ForwardEuler {
   Vectord gravity_ = Vectord(0.);
   BasicWeaklyRhs rhs_ = BasicWeaklyRhs(0.9);
   Derivative derivative_;
+  DpcShifting shifting_;
 };
 
 class DualSPHysicsVerletTS {
@@ -68,4 +70,5 @@ class DualSPHysicsVerletTS {
   BasicWeaklyRhs rhs_ = BasicWeaklyRhs(1.1);
   BaseParticlesState init_state_;
   Derivative derivative_;
+  DpcShifting shifting_;
 };

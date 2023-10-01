@@ -32,7 +32,7 @@ constexpr T pi() {
 }
 
 template <size_t Exponent, typename T>
-auto tpow(const T& x) {
+constexpr auto tpow(const T& x) {
   if constexpr (Exponent == 0)
     return 1;
   else if constexpr (Exponent == 1)
