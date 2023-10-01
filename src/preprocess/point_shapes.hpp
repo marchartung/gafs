@@ -28,7 +28,7 @@
 
 #include "utils/types.hpp"
 
-class Vectordiscretize {
+class PointDiscretize {
  public:
   static std::vector<Vectord> Cube(const double dr, const Vectord dim,
                                    Vectord trans) {
@@ -61,8 +61,6 @@ class Vectordiscretize {
                                         Vectord trans) {
     std::vector<Vectord> res;
     const Vectord ellips_cooefs = 0.5 * dim;
-    const size_t xe = 0.5 * dim[0] / dr, ye = 0.5 * dim[1] / dr,
-                 ze = 0.5 * dim[2] / dr;
     for (size_t x = 0; x < dim[0] / dr; ++x) {
       for (size_t y = 0; y < dim[1] / dr; ++y) {
         for (size_t z = 0; z < dim[2] / dr; ++z) {

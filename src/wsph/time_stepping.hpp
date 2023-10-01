@@ -20,21 +20,55 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#include "io/write_domain.hpp"
-#include "preprocess/cases.hpp"
+#pragma once
+
+#include <vector>
+
+#include "derivatives.hpp"
+#include "domain.hpp"
+#include "particles.hpp"
+#include "shifting.hpp"
 #include "utils/types.hpp"
-#include "wsph/time_stepping.hpp"
 
-int main() {
-  CaseSetup setup = Cases::CollidingDroplets();
-  std::filesystem::create_directories(setup.output_dir);
-  DualSPHysicsVerletTS ts(setup.gravity);
+struct BaseParticlesState {
+  std::vector<Vectord> pos;
+  std::vector<Vectord> vel;
+  std::vector<double> dty;
 
-  Write(0, setup.output_dir, setup.d.p);
-  for (size_t output = 1; output <= setup.num_outputs; ++output) {
-    ts.TimeStep(setup.output_dt(), setup.d);
-    Write(output, setup.output_dir, setup.d.p);
+  void Set(const Particles& p) {
+    pos = p.pos();
+    vel = p.vel();
+    dty = p.dty();
   }
+};
 
-  return 0;
-}
+class ForwardEuler {
+ public:
+  ForwardEuler() = default;
+  ForwardEuler(const Vectord gravity) : gravity_(gravity) {}
+
+  void TimeStep(const double dt, Domain& d);
+
+ private:
+  Vectord gravity_ = Vectord(0.);
+  BasicWeaklyRhs rhs_ = BasicWeaklyRhs(0.9);
+  Derivative derivative_;
+  DpcShifting shifting_;
+};
+
+class DualSPHysicsVerletTS {
+ public:
+  DualSPHysicsVerletTS() = default;
+  DualSPHysicsVerletTS(const Vectord gravity) : gravity_(gravity) {}
+
+  void TimeStep(const double dt, Domain& d);
+
+ private:
+  void IntegrateFinalStep(const double dt, Domain& d);
+
+  Vectord gravity_;
+  BasicWeaklyRhs rhs_ = BasicWeaklyRhs(1.5);
+  BaseParticlesState init_state_;
+  Derivative derivative_;
+  DpcShifting shifting_;
+};

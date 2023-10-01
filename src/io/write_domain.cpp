@@ -20,21 +20,38 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#include "io/write_domain.hpp"
-#include "preprocess/cases.hpp"
-#include "utils/types.hpp"
-#include "wsph/time_stepping.hpp"
+#include "write_domain.hpp"
 
-int main() {
-  CaseSetup setup = Cases::CollidingDroplets();
-  std::filesystem::create_directories(setup.output_dir);
-  DualSPHysicsVerletTS ts(setup.gravity);
+#include <iostream>
 
-  Write(0, setup.output_dir, setup.d.p);
-  for (size_t output = 1; output <= setup.num_outputs; ++output) {
-    ts.TimeStep(setup.output_dt(), setup.d);
-    Write(output, setup.output_dir, setup.d.p);
-  }
+#include "file/vtp.hpp"
+#include "wsph/dynamic_boundary.hpp"
+#include "wsph/particles.hpp"
 
-  return 0;
+void Write(const size_t output_num, const std::filesystem::path output_dir,
+           const Particles& p) {
+  VTP vtp;
+  vtp.SetPoints(p.pos());
+  vtp.AddPointData("velocity", p.vel().data(), p.size());
+  vtp.AddPointData("density", p.dty().data(), p.size());
+
+  const std::filesystem::path path =
+      output_dir / ("fluid_" + std::to_string(output_num) + ".vtp");
+  vtp.Export(path);
+}
+
+void Write(const size_t output_num, const std::filesystem::path output_dir,
+           const DynamicBoundary& b) {
+  VTP vtp;
+  vtp.SetPoints(b.pos());
+  const std::filesystem::path path =
+      output_dir / ("solid_" + std::to_string(output_num) + ".vtp");
+  vtp.Export(path);
+}
+
+void Write(const size_t output_num, const std::filesystem::path output_dir,
+           const Domain& d) {
+  Write(output_num, output_dir, d.p);
+  Write(output_num, output_dir, d.dbc);
+  std::cout << "wrote output " << output_num << std::endl;
 }

@@ -20,21 +20,23 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#include "io/write_domain.hpp"
-#include "preprocess/cases.hpp"
-#include "utils/types.hpp"
-#include "wsph/time_stepping.hpp"
+#pragma once
 
-int main() {
-  CaseSetup setup = Cases::CollidingDroplets();
-  std::filesystem::create_directories(setup.output_dir);
-  DualSPHysicsVerletTS ts(setup.gravity);
+#include "dynamic_boundary.hpp"
+#include "neighbor/saved_neighbors.hpp"
+#include "particles.hpp"
 
-  Write(0, setup.output_dir, setup.d.p);
-  for (size_t output = 1; output <= setup.num_outputs; ++output) {
-    ts.TimeStep(setup.output_dt(), setup.d);
-    Write(output, setup.output_dir, setup.d.p);
+struct Domain {
+  Domain() = default;
+  Domain(Particles p_in) : p(std::move(p_in)), p_p_neighbors(p.pos()) {}
+
+  void Update() {
+    p.Update();
+    p_p_neighbors.Update(p.pos());
   }
 
-  return 0;
-}
+  Particles p;
+  SavedNeighborsD p_p_neighbors;
+
+  DynamicBoundary dbc;
+};

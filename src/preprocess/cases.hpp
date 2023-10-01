@@ -22,43 +22,32 @@
 
 #pragma once
 
+#include <string>
 #include <vector>
 
-#include "basic_equations.hpp"
+#include "point_shapes.hpp"
 #include "utils/types.hpp"
+#include "wsph/domain.hpp"
+#include "wsph/materials.hpp"
+#include "wsph/particles.hpp"
 
-class VolumeBoundary {
+struct CaseSetup {
+  double output_dt() const { return sim_time / num_outputs; }
+
+  double sim_time = 0.;
+  size_t num_outputs = 0;
+  std::string output_dir = "./";
+
+  Vectord gravity = 0.;
+  Domain d;
+};
+
+class Cases {
  public:
-  VolumeBoundary() = default;
-  VolumeBoundary(const double h, std::vector<Vectord> pos)
-      : pos_(std::move(pos)), volume_(pos_.size()) {
-    ComputeWallVolume(h);
-  }
+  static CaseSetup CollidingDroplets(const double droplet_resolution = 10.,
+                                     const double relative_velocity = 5.);
 
-  void ComputeWallVolume(const double h) {
-    for (size_t i = 0; i < pos_.size(); ++i) {
-      double kernel_sum = 0;
-      for (size_t j = 0; j < pos_.size(); ++j) {
-        if (i == j) continue;
-        const double dist = Distance(pos_[i], pos_[j]);
-        if (dist < 2. * h) {
-          kernel_sum += Wendland(dist, h);
-        }
-      }
-      volume_[i] = 1. / kernel_sum;
-    }
-  }
-
-  size_t size() const { return pos_.size(); }
-
-  const std::vector<Vectord>& pos() const { return pos_; }
-  const Vectord& pos(const size_t idx) const { return pos_[idx]; }
-
-  const std::vector<double>& vol() const { return volume_; }
-  double vol(const size_t idx) const { return volume_[idx]; }
-  double& vol(const size_t idx) { return volume_[idx]; }
-
- private:
-  std::vector<Vectord> pos_;
-  std::vector<double> volume_;
+  static CaseSetup SimpleTank(const double tank_resolution = 10.,
+                              const double tank_height = 0.3,
+                              const double tank_width = 0.5);
 };

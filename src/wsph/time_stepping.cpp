@@ -32,13 +32,16 @@ void ForwardEuler::TimeStep(const double dt, Domain& d) {
     rhs_.Compute(d, derivative_);
     const double sub_dt = std::min(rhs_.ComputeMaxDt(d, derivative_),
                                    std::max(dt - stepped_time, 1.e-14));
-    derivative_.Step(sub_dt / 2., gravity_, d.p);
+    shifting_.Compute(d);
+    derivative_.Step(sub_dt, gravity_, d.p);
+    shifting_.Apply(sub_dt, d);
     d.Update();
     stepped_time += sub_dt;
     ++num_steps;
   } while (stepped_time < dt);
 
   std::cout << "\navg dt: " << dt / num_steps << " | num steps: " << num_steps
+            << " | num neighbors: " << d.p.pos().UpdateVersion()
             << " | step time: "
             << 1000. * (omp_get_wtime() - t_start) / num_steps << "ms \n";
 }

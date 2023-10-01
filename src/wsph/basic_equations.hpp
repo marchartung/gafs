@@ -60,6 +60,11 @@ DEVICE double WendlandGradient(const double distance, const double h) {
   const double b = 1. - 0.5 * q;
   return a * q * math::tpow<3>(b);
 }
+DEVICE double Chi(const double dist, const double dr) {
+  const double q1 = dist / dr, w1 = math::tpow<4>(1. - q1) * (4. * q1 + 1.);
+  constexpr double q2 = 0.5, w2 = math::tpow<4>(1. - q2) * (4. * q2 + 1.);
+  return std::sqrt(w1 / w2);
+}
 
 std::vector<double> ComputePressure(const std::vector<double>& density,
                                     const double ref_density,

@@ -22,53 +22,25 @@
 
 #pragma once
 
-#include <vector>
-
-#include "derivatives.hpp"
+#include "basic_equations.hpp"
 #include "domain.hpp"
-#include "particles.hpp"
-#include "shifting.hpp"
-#include "utils/types.hpp"
 
-struct BaseParticlesState {
-  std::vector<Vectord> pos;
-  std::vector<Vectord> vel;
-  std::vector<double> dty;
+// From Jandaghian et al, 2021: Stability and accuracy of the
+// weakly compressible SPH with particle regularization techniques
 
-  void Set(const Particles& p) {
-    pos = p.pos();
-    vel = p.vel();
-    dty = p.dty();
-  }
-};
-
-class ForwardEuler {
+class DpcShifting {
  public:
-  ForwardEuler() = default;
-  ForwardEuler(const Vectord gravity) : gravity_(gravity) {}
+  DpcShifting() = default;
+  DpcShifting(const double prs_min, const double prs_max)
+      : prs_min_(prs_min), prs_max_(prs_max) {}
 
-  void TimeStep(const double dt, Domain& d);
+  void Compute(const Domain& d);
+
+  void Apply(const double dt, Domain& d);
 
  private:
-  Vectord gravity_ = Vectord(0.);
-  BasicWeaklyRhs rhs_ = BasicWeaklyRhs(0.9);
-  Derivative derivative_;
-  DpcShifting shifting_;
-};
-
-class DualSPHysicsVerletTS {
- public:
-  DualSPHysicsVerletTS() = default;
-  DualSPHysicsVerletTS(const Vectord gravity) : gravity_(gravity) {}
-
-  void TimeStep(const double dt, Domain& d);
-
- private:
-  void IntegrateFinalStep(const double dt, Domain& d);
-
-  Vectord gravity_;
-  BasicWeaklyRhs rhs_ = BasicWeaklyRhs(1.1);
-  BaseParticlesState init_state_;
-  Derivative derivative_;
-  DpcShifting shifting_;
+  double prs_min_ = 0;
+  double prs_max_ = std::numeric_limits<double>::max();
+  std::vector<Vectord> collision_term_;
+  std::vector<Vectord> repulsive_term_;
 };

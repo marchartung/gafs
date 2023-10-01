@@ -22,20 +22,9 @@
 
 #pragma once
 
-#include "neighbor/saved_neighbors.hpp"
-#include "particles.hpp"
-#include "volume_boundary.hpp"
+#include <filesystem>
 
-struct Domain {
-  Domain(Particles p_in) : p(std::move(p_in)), p_p_neighbors(p.pos()) {}
+#include "wsph/domain.hpp"
 
-  void Update() {
-    p.Update();
-    p_p_neighbors.Update(p.pos());
-  }
-
-  Particles p;
-  SavedNeighborsD p_p_neighbors;
-
-  VolumeBoundary vb;
-};
+void Write(const size_t output_num, const std::filesystem::path output_dir,
+           const Domain& d);
