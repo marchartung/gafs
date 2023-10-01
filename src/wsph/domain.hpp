@@ -28,7 +28,12 @@
 
 struct Domain {
   Domain() = default;
-  Domain(Particles p_in) : p(std::move(p_in)), p_p_neighbors(p.pos()) {}
+  Domain(Particles p_in, DynamicBoundary dbc_in)
+      : p(std::move(p_in)),
+        p_p_neighbors(p.pos()),
+        dbc(std::move(dbc_in)),
+        p_dbc_neighbors(p.pos(), dbc.pos()) {}
+  Domain(Particles p_in) : Domain(std::move(p_in), DynamicBoundary()) {}
 
   void Update() {
     p.Update();
@@ -39,4 +44,5 @@ struct Domain {
   SavedNeighborsD p_p_neighbors;
 
   DynamicBoundary dbc;
+  SavedNeighborsD p_dbc_neighbors;
 };

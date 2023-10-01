@@ -22,6 +22,8 @@
 
 #include "cases.hpp"
 
+#include <algorithm>
+
 CaseSetup Cases::CollidingDroplets(const double droplet_resolution,
                                    const double relative_velocity) {
   MaterialSettings settings = MaterialSettings::Water();
@@ -37,8 +39,9 @@ CaseSetup Cases::CollidingDroplets(const double droplet_resolution,
   std::vector<Vectord> vel(pos.size(), Vectord(0.));
   std::fill(vel.begin(), vel.begin() + n1, Vectord{rel_vel / 2, 0., 0.});
   std::fill(vel.begin() + n1, vel.end(), Vectord{-rel_vel / 2., 0., 0.});
+  const size_t n = pos.size();
   Particles p(settings, std::move(pos), std::move(vel),
-              std::vector<double>(pos.size(), settings.ref_density));
+              std::vector<double>(n, settings.ref_density));
 
   CaseSetup setup;
   setup.num_outputs = 200;
@@ -48,10 +51,40 @@ CaseSetup Cases::CollidingDroplets(const double droplet_resolution,
   return setup;
 }
 
-CaseSetup Cases::SimpleTank(const double tank_resolution,
+CaseSetup Cases::SimpleTank(const double wall_density,
+                            const double tank_resolution,
                             const double tank_height, const double tank_width) {
-  // TODO
+  const double gravity = -9.81;
+  MaterialSettings settings = MaterialSettings::Water();
+  settings.dr =
+      std::cbrt(tank_width * tank_width * tank_height) / tank_resolution;
+  std::cout << "dr: " << settings.dr << "\n";
+  settings.speed_of_sound =
+      10. * std::abs(gravity) * std::sqrt(2. * tank_height / std::abs(gravity));
 
+  auto fluid_pos = PointDiscretize::Cube(
+      settings.dr, Vectord(tank_width, tank_width, tank_height), Vectord(0.));
+
+  const double wall_thickness =
+      settings.dr * std::ceil(settings.smoothing_ratio) * 2.;
+
+  auto wall_bottom = PointDiscretize::Cube(
+      settings.dr, Vectord(tank_width, tank_width, wall_thickness),
+      Vectord(0, 0, -wall_thickness));
+
+  const size_t n = fluid_pos.size();
+  Particles p(settings, std::move(fluid_pos),
+              std::vector<Vectord>(n, Vectord(0.)),
+              std::vector<double>(n, settings.ref_density));
+
+  DynamicBoundary dbc(settings.dr * settings.smoothing_ratio * 2.,
+                      std::pow(settings.dr, 3) * wall_density, settings.dr,
+                      std::move(wall_bottom));
   CaseSetup s;
+  s.d = Domain(std::move(p), std::move(dbc));
+  s.gravity = Vectord(0., 0., gravity);
+  s.num_outputs = 100;
+  s.sim_time = 1.;
+  s.output_dir = "./simple_tank";
   return s;
 }

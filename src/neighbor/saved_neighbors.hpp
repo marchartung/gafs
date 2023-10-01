@@ -35,6 +35,11 @@ class SavedNeighborsD {
     RecomputeNeighbors(point_list);
   }
 
+  SavedNeighborsD(const PointCellListD& src_list,
+                  const PointCellListD& target_list) {
+    // RecomputeNeighbors(src_list, target_list); // FIXME
+  }
+
   Span<const SizeT> neighbors(const SizeT idx) const {
     return Span<const SizeT>(neighbors_[idx].data(), num_active_[idx]);
   }

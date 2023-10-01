@@ -31,10 +31,4 @@ struct MaterialSettings {
   double dr = 0.00121 / 20.;
 
   static MaterialSettings Water() { return MaterialSettings(); }
-  static MaterialSettings Wall() {
-    // return MaterialSettings();
-    MaterialSettings res;
-    res.dr = res.dr / 2.;
-    return res;
-  }
 };

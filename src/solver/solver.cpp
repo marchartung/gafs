@@ -26,14 +26,14 @@
 #include "wsph/time_stepping.hpp"
 
 int main() {
-  CaseSetup setup = Cases::CollidingDroplets();
+  CaseSetup setup = Cases::SimpleTank();
   std::filesystem::create_directories(setup.output_dir);
   DualSPHysicsVerletTS ts(setup.gravity);
 
-  Write(0, setup.output_dir, setup.d.p);
+  Write(0, setup.output_dir, setup.d);
   for (size_t output = 1; output <= setup.num_outputs; ++output) {
     ts.TimeStep(setup.output_dt(), setup.d);
-    Write(output, setup.output_dir, setup.d.p);
+    Write(output, setup.output_dir, setup.d);
   }
 
   return 0;

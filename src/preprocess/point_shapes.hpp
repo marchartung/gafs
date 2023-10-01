@@ -51,7 +51,7 @@ class PointDiscretize {
         res.push_back(p);
       }
     }
-    const Vectord offset = trans;
+    const Vectord offset = trans + Vectord(xe * dr, ye * dr, ze * dr);
     for (Vectord& p : res) {
       p += offset;
     }
