@@ -11,6 +11,7 @@ SET(SOURCES
   derivatives.hpp derivatives.cpp
   domain.hpp
   shifting.hpp shifting.cpp
+  particle_boundary.hpp
 )
 
 SET(LIBRARIES "${LIBRARIES}" gafs_utils gafs_neighbor)
