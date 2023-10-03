@@ -25,7 +25,7 @@
 #include <iostream>
 
 #include "file/vtp.hpp"
-#include "wsph/dynamic_boundary.hpp"
+#include "wsph/particle_boundary.hpp"
 #include "wsph/particles.hpp"
 
 void Write(const size_t output_num, const std::filesystem::path output_dir,
@@ -41,7 +41,7 @@ void Write(const size_t output_num, const std::filesystem::path output_dir,
 }
 
 void Write(const size_t output_num, const std::filesystem::path output_dir,
-           const DynamicBoundary& b) {
+           const ParticleBoundary& b) {
   VTP vtp;
   vtp.SetPoints(b.pos());
   const std::filesystem::path path =
@@ -61,8 +61,8 @@ void Write(const size_t output_num, const std::filesystem::path output_dir,
 void Write(const size_t output_num, const std::filesystem::path output_dir,
            const Domain& d) {
   Write(output_num, output_dir, d.p);
-  Write(output_num, output_dir, d.dbc);
+  Write(output_num, output_dir, d.pb);
   Write(output_num, output_dir, d.m);
   std::cout << "wrote output " << output_num << " num particles: " << d.p.size()
-            << " num dpc: " << d.dbc.size() << std::endl;
+            << " num dpc: " << d.pb.size() << std::endl;
 }

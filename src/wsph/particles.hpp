@@ -33,19 +33,6 @@
 class Particles {
  public:
   Particles() = default;
-  Particles(const MaterialSettings& s, PointCellListD pos,
-            std::vector<Vectord> vel, std::vector<double> dty)
-      : ref_density_(s.ref_density),
-        speed_of_sound_(s.speed_of_sound),
-        pressure_parameter_(
-            ComputePressureParameter(ref_density_, speed_of_sound_)),
-        mass_(std::pow(s.dr, 3) * ref_density_),
-        h_(s.dr * s.smoothing_ratio),
-        dr_(s.dr),
-        pos_(std::move(pos)),
-        vel_(std::move(vel)),
-        dty_(std::move(dty)),
-        prs_(ComputePressure(dty_, ref_density_, pressure_parameter_)) {}
 
   Particles(const MaterialSettings& s, std::vector<Vectord> pos,
             std::vector<Vectord> vel, std::vector<double> dty) {
@@ -99,6 +86,20 @@ class Particles {
   double viscosity() const { return 0.01; }
 
  private:
+  Particles(const MaterialSettings& s, PointCellListD pos,
+            std::vector<Vectord> vel, std::vector<double> dty)
+      : ref_density_(s.ref_density),
+        speed_of_sound_(s.speed_of_sound),
+        pressure_parameter_(
+            ComputePressureParameter(ref_density_, speed_of_sound_)),
+        mass_(std::pow(s.dr, 3) * ref_density_),
+        h_(s.dr * s.smoothing_ratio),
+        dr_(s.dr),
+        pos_(std::move(pos)),
+        vel_(std::move(vel)),
+        dty_(std::move(dty)),
+        prs_(ComputePressure(dty_, ref_density_, pressure_parameter_)) {}
+
   double ref_density_;
   double speed_of_sound_;
   double pressure_parameter_;

@@ -53,6 +53,9 @@ class BasicWeaklyRhs {
   double ComputeMaxDt(const Domain& d, const Derivative& derivative);
 
  private:
+  void ComputePP(const bool overwrite, const Particles& p, const Particles& np,
+                 const SavedNeighborsD& sn, Derivative& res);
+
   double CourantViscDt(const Particles& p, const SavedNeighborsD& neighbors);
 
   double ForceDt(const double h, const Derivative& d);

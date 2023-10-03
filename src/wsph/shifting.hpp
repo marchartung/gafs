@@ -39,6 +39,9 @@ class DpcShifting {
   void Apply(const double dt, Domain& d);
 
  private:
+  void ComputePP(const bool overwrite, const Particles& p, const Particles& np,
+                 const SavedNeighborsD& sn);
+
   double prs_min_ = 0;
   double prs_max_ = std::numeric_limits<double>::max();
   std::vector<Vectord> collision_term_;

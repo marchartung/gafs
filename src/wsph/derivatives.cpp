@@ -34,64 +34,46 @@ void Derivative::Step(const double dt, const Vectord gravity, Particles& p) {
 }
 
 void BasicWeaklyRhs::Compute(const Domain& d, Derivative& res) {
-  res.Resize(d.p.size());
+  ComputePP(true, d.p, d.p, d.p_p_neighbors, res);
+  ComputePP(false, d.p, d.pb, d.p_pb_neighbors, res);
+}
+
+void BasicWeaklyRhs::ComputePP(const bool overwrite, const Particles& p,
+                               const Particles& np, const SavedNeighborsD& sn,
+                               Derivative& res) {
+  res.Resize(p.size());
 #pragma omp parallel for schedule(guided)
-  for (SizeT i = 0; i < d.p.size(); ++i) {
+  for (SizeT i = 0; i < p.size(); ++i) {
     Vectord acc = 0.;
     double dtyD = 0.;
-    const double prs_i = d.p.prs(i);
-    for (const SizeT j : d.p_p_neighbors.neighbors(i)) {
-      const double prs_j = d.p.prs(j);
-      const Vectord rij = d.p.pos(i) - d.p.pos(j);
+    const double prs_i = p.prs(i);
+    for (const SizeT j : sn.neighbors(i)) {
+      const double prs_j = np.prs(j);
+      const Vectord rij = p.pos(i) - np.pos(j);
       const double dist2 = rij * rij, dist = std::sqrt(dist2);
-      const double fm = -(prs_i / math::tpow<2>(d.p.dty(i)) +
-                          prs_j / math::tpow<2>(d.p.dty(j)));
-
-      const Vectord vij = d.p.vel(i) - d.p.vel(j);
-      const double vij_rij = vij * rij;
-      double fv = 0.;
-      if (vij_rij < 0.) {
-        const double v = 2. * d.p.viscosity() * d.p.h() * d.p.sos() /
-                         (d.p.dty(i) + d.p.dty(j));
-        fv = v * (vij_rij / (dist2 + 0.01 * math::tpow<2>(d.p.h())));
-      }
-
-      const double wg = WendlandGradient(dist, d.p.h());
-      acc += (fm + fv) * wg * rij;
-      dtyD += (d.p.mass() / d.p.dty(j)) * vij * (wg * rij);
-    }
-    res.dtyD[i] = d.p.dty(i) * dtyD;
-    res.acc[i] = d.p.mass() * acc;
-  }
-
-#pragma omp parallel for schedule(guided)
-  for (SizeT i = 0; i < d.p.size(); ++i) {
-    Vectord acc = 0.;
-    double dtyD = 0.;
-    for (const SizeT j : d.p_dbc_neighbors.neighbors(i)) {
-      const Vectord rij = d.p.pos(i) - d.dbc.pos(j);
-      const double dist2 = rij * rij, dist = std::sqrt(dist2);
-
-      const double w = Wendland(dist, d.p.h()),
-                   ww0 = w + d.p.ref_density() / d.p.mass();
       const double fm =
-          -2. * math::tpow<2>(d.p.sos()) * (w / math::tpow<2>(ww0));
+          -(prs_i / math::tpow<2>(p.dty(i)) + prs_j / math::tpow<2>(np.dty(j)));
 
-      const Vectord vij = d.p.vel(i);
+      const Vectord vij = p.vel(i) - np.vel(j);
       const double vij_rij = vij * rij;
       double fv = 0.;
       if (vij_rij < 0.) {
-        const double v = 2. * 0.01 * d.p.h() * d.p.sos() / ww0;
-        fv = v * (vij_rij / (dist2 + 0.01 * math::tpow<2>(d.p.h())));
+        const double v =
+            2. * p.viscosity() * p.h() * p.sos() / (p.dty(i) + np.dty(j));
+        fv = v * (vij_rij / (dist2 + 0.01 * math::tpow<2>(p.h())));
       }
 
-      const double wg = WendlandGradient(dist, d.p.h());
+      const double wg = WendlandGradient(dist, p.h());
       acc += (fm + fv) * wg * rij;
-      dtyD += d.p.mass() * ww0 *
-              ((1. / ww0) * vij * (wg * Vectord(0., 0., rij[2])));
+      dtyD += (p.mass() / np.dty(j)) * vij * (wg * rij);
     }
-    res.acc[i] += acc;
-    res.dtyD[i] += dtyD;
+    if (overwrite) {
+      res.dtyD[i] = p.dty(i) * dtyD;
+      res.acc[i] = p.mass() * acc;
+    } else {
+      res.dtyD[i] += p.dty(i) * dtyD;
+      res.acc[i] += p.mass() * acc;
+    }
   }
 }
 

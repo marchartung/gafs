@@ -26,6 +26,7 @@
 
 #include "mesh_shapes.hpp"
 #include "solid_discretize.hpp"
+#include "wsph/particle_boundary.hpp"
 
 CaseSetup Cases::CollidingDroplets(const double droplet_resolution,
                                    const double relative_velocity) {
@@ -54,33 +55,33 @@ CaseSetup Cases::CollidingDroplets(const double droplet_resolution,
   return setup;
 }
 
-CaseSetup Cases::SimpleTank(const double wall_density,
-                            const double tank_resolution,
+CaseSetup Cases::SimpleTank(const double tank_resolution,
                             const double tank_height, const double tank_width) {
   const double gravity = -9.81;
   MaterialSettings settings = MaterialSettings::Water();
   settings.dr =
       std::cbrt(tank_width * tank_width * tank_height) / tank_resolution;
   settings.speed_of_sound =
-      60. * std::abs(gravity) * std::sqrt(2. * tank_height / std::abs(gravity));
+      10. * std::abs(gravity) * std::sqrt(2. * tank_height / std::abs(gravity));
 
   auto fluid_pos = PointDiscretize::Cube(
       settings.dr, Vectord(tank_width, tank_width, tank_height), Vectord(0.));
 
   auto mesh = MeshShapes::Cube(Vectord(tank_width, tank_width, tank_height),
                                Vectord(0.));
-  auto solid = SolidDiscretize::Discretize(4, settings.dr, mesh);
+  auto solid_pos = SolidDiscretize::Discretize(4, settings.dr, mesh);
 
-  const size_t n = fluid_pos.size();
+  const size_t nf = fluid_pos.size();
   Particles p(settings, std::move(fluid_pos),
-              std::vector<Vectord>(n, Vectord(0.)),
-              std::vector<double>(n, settings.ref_density));
+              std::vector<Vectord>(nf, Vectord(0.)),
+              std::vector<double>(nf, settings.ref_density));
 
-  DynamicBoundary dbc(settings.dr * settings.smoothing_ratio * 2.,
-                      std::pow(settings.dr, 3) * wall_density, settings.dr,
-                      std::move(solid));
+  const size_t npb = solid_pos.size();
+  ParticleBoundary pb(settings, std::move(solid_pos),
+                      std::vector<Vectord>(npb, Vectord(0.)),
+                      std::vector<double>(npb, settings.ref_density));
   CaseSetup s;
-  s.d = Domain(std::move(p), std::move(dbc));
+  s.d = Domain(std::move(p), std::move(pb));
   s.d.m = mesh;
   s.gravity = Vectord(0., 0., gravity);
   s.num_outputs = 200;

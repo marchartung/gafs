@@ -47,8 +47,7 @@ class Cases {
   static CaseSetup CollidingDroplets(const double droplet_resolution = 10.,
                                      const double relative_velocity = 5.);
 
-  static CaseSetup SimpleTank(const double wall_density = 1000.,
-                              const double tank_resolution = 10.,
+  static CaseSetup SimpleTank(const double tank_resolution = 10.,
                               const double tank_height = 0.5,
                               const double tank_width = 0.5);
 

@@ -4,7 +4,6 @@ cmake_minimum_required(VERSION 3.10)
 SET(SOURCES 
   materials.hpp
   basic_equations.hpp basic_equations.cpp
-  dynamic_boundary.hpp
   particles.hpp
   mesh.hpp
   time_stepping.hpp time_stepping.cpp
