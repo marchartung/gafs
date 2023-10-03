@@ -3,7 +3,9 @@ cmake_minimum_required(VERSION 3.10)
 
 SET(SOURCES 
   point_shapes.hpp
+  mesh_shapes.hpp
   cases.hpp cases.cpp
+  solid_discretize.hpp
 )
 
 

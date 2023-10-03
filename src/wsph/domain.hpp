@@ -23,6 +23,7 @@
 #pragma once
 
 #include "dynamic_boundary.hpp"
+#include "mesh.hpp"
 #include "neighbor/saved_neighbors.hpp"
 #include "particles.hpp"
 
@@ -33,16 +34,19 @@ struct Domain {
         p_p_neighbors(p.pos()),
         dbc(std::move(dbc_in)),
         p_dbc_neighbors(p.pos(), dbc.pos()) {}
+
   Domain(Particles p_in) : Domain(std::move(p_in), DynamicBoundary()) {}
 
   void Update() {
     p.Update();
     p_p_neighbors.Update(p.pos());
+    p_dbc_neighbors.Update(p.pos(), dbc.pos());
   }
 
   Particles p;
   SavedNeighborsD p_p_neighbors;
 
+  Mesh m;
   DynamicBoundary dbc;
   SavedNeighborsD p_dbc_neighbors;
 };

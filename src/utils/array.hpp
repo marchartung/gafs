@@ -195,6 +195,20 @@ DEVICE T Distance(const Array<T, N> &a, const Array<T, N> &b) {
   return Length(a - b);
 }
 
+template <typename T>
+DEVICE Array<T, 3> CrossProduct(const Array<T, 3> &u, const Array<T, 3> &v) {
+  const T x = u[1] * v[2] - u[2] * v[1];
+  const T y = u[2] * v[0] - u[0] * v[2];
+  const T z = u[0] * v[1] - u[1] * v[0];
+  return Array<T, 3>(x, y, z);
+}
+
+template <typename T>
+DEVICE Array<T, 3> Normal(const Array<T, 3> &u, const Array<T, 3> &v) {
+  const Array<T, 3> d = CrossProduct(u, v);
+  return d / Length(d);
+}
+
 template <typename T, size_t N>
 DEVICE constexpr Array<T, N> Abs(const Array<T, N> &v) {
   Array<T, N> res;

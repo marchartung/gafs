@@ -28,21 +28,26 @@
 #include "utils/types.hpp"
 
 using Segment = std::array<Vectord, 3>;
-
 class Mesh {
  public:
   Mesh() = default;
-  Mesh(std::vector<Vectord> points, std::vector<std::array<size_t, 3>> segments)
-      : points_(std::move(points)), segments_(std::move(segments)) {}
+  Mesh(std::vector<Vectord> vertices, std::vector<Vectoru> segments)
+      : vertices_(std::move(vertices)), segments_(std::move(segments)) {}
 
-  size_t size() const { return segments_.size(); }
+  SizeT size() const { return segments_.size(); }
 
   Segment operator[](const size_t idx) const {
     const auto s = segments_[idx];
-    return {points_[s[0]], points_[s[1]], points_[s[2]]};
+    return {vertices_[s[0]], vertices_[s[1]], vertices_[s[2]]};
   }
 
+  const std::vector<Vectord>& vertices() const { return vertices_; }
+  std::vector<Vectord>& vertices() { return vertices_; }
+
+  const std::vector<Vectoru>& segments() const { return segments_; }
+  std::vector<Vectoru>& segments() { return segments_; }
+
  private:
-  std::vector<Vectord> points_;
-  std::vector<std::array<size_t, 3>> segments_;
+  std::vector<Vectord> vertices_;
+  std::vector<Vectoru> segments_;
 };

@@ -44,7 +44,6 @@ void BasicWeaklyRhs::Compute(const Domain& d, Derivative& res) {
       const double prs_j = d.p.prs(j);
       const Vectord rij = d.p.pos(i) - d.p.pos(j);
       const double dist2 = rij * rij, dist = std::sqrt(dist2);
-      const double wg = WendlandGradient(dist, d.p.h());
       const double fm = -(prs_i / math::tpow<2>(d.p.dty(i)) +
                           prs_j / math::tpow<2>(d.p.dty(j)));
 
@@ -56,12 +55,43 @@ void BasicWeaklyRhs::Compute(const Domain& d, Derivative& res) {
                          (d.p.dty(i) + d.p.dty(j));
         fv = v * (vij_rij / (dist2 + 0.01 * math::tpow<2>(d.p.h())));
       }
+
+      const double wg = WendlandGradient(dist, d.p.h());
       acc += (fm + fv) * wg * rij;
       dtyD += (d.p.mass() / d.p.dty(j)) * vij * (wg * rij);
     }
-
     res.dtyD[i] = d.p.dty(i) * dtyD;
     res.acc[i] = d.p.mass() * acc;
+  }
+
+#pragma omp parallel for schedule(guided)
+  for (SizeT i = 0; i < d.p.size(); ++i) {
+    Vectord acc = 0.;
+    double dtyD = 0.;
+    for (const SizeT j : d.p_dbc_neighbors.neighbors(i)) {
+      const Vectord rij = d.p.pos(i) - d.dbc.pos(j);
+      const double dist2 = rij * rij, dist = std::sqrt(dist2);
+
+      const double w = Wendland(dist, d.p.h()),
+                   ww0 = w + d.p.ref_density() / d.p.mass();
+      const double fm =
+          -2. * math::tpow<2>(d.p.sos()) * (w / math::tpow<2>(ww0));
+
+      const Vectord vij = d.p.vel(i);
+      const double vij_rij = vij * rij;
+      double fv = 0.;
+      if (vij_rij < 0.) {
+        const double v = 2. * 0.01 * d.p.h() * d.p.sos() / ww0;
+        fv = v * (vij_rij / (dist2 + 0.01 * math::tpow<2>(d.p.h())));
+      }
+
+      const double wg = WendlandGradient(dist, d.p.h());
+      acc += (fm + fv) * wg * rij;
+      dtyD += d.p.mass() * ww0 *
+              ((1. / ww0) * vij * (wg * Vectord(0., 0., rij[2])));
+    }
+    res.acc[i] += acc;
+    res.dtyD[i] += dtyD;
   }
 }
 
@@ -79,7 +109,7 @@ double BasicWeaklyRhs::CourantViscDt(const Particles& p,
     double tmp_c = 0.;
     for (const SizeT j : neighbors.neighbors(i)) {
       const Vectord rij = p.pos(i) - p.pos(j);
-      const double dist2 = rij * rij, dist = std::sqrt(dist2);
+      const double dist2 = rij * rij;
       const double vij_rij = (p.vel(i) - p.vel(j)) * rij;
       const double tmp =
           std::abs(p.h() * vij_rij / (dist2 + 0.01 * math::tpow<2>(p.h())));

@@ -54,6 +54,11 @@ DEVICE double Wendland(const double distance, const double h) {
   return a * math::tpow<4>(b) * (1. + 2. * q);
 }
 
+DEVICE double Wendland0(const double h) {
+  const double a = 21. / (16. * math::pi<double>()) / (h * h * h);
+  return a;
+}
+
 DEVICE double WendlandGradient(const double distance, const double h) {
   const double a = (-5. * 21. / (16. * math::pi<double>())) / math::tpow<5>(h);
   const double q = distance / h;

@@ -24,6 +24,9 @@
 
 #include <algorithm>
 
+#include "mesh_shapes.hpp"
+#include "solid_discretize.hpp"
+
 CaseSetup Cases::CollidingDroplets(const double droplet_resolution,
                                    const double relative_velocity) {
   MaterialSettings settings = MaterialSettings::Water();
@@ -44,8 +47,8 @@ CaseSetup Cases::CollidingDroplets(const double droplet_resolution,
               std::vector<double>(n, settings.ref_density));
 
   CaseSetup setup;
-  setup.num_outputs = 200;
-  setup.sim_time = 0.02;
+  setup.num_outputs = 50;
+  setup.sim_time = 0.005;
   setup.output_dir = "./colliding_droplets";
   setup.d = Domain(std::move(p));
   return setup;
@@ -58,19 +61,15 @@ CaseSetup Cases::SimpleTank(const double wall_density,
   MaterialSettings settings = MaterialSettings::Water();
   settings.dr =
       std::cbrt(tank_width * tank_width * tank_height) / tank_resolution;
-  std::cout << "dr: " << settings.dr << "\n";
   settings.speed_of_sound =
-      10. * std::abs(gravity) * std::sqrt(2. * tank_height / std::abs(gravity));
+      60. * std::abs(gravity) * std::sqrt(2. * tank_height / std::abs(gravity));
 
   auto fluid_pos = PointDiscretize::Cube(
       settings.dr, Vectord(tank_width, tank_width, tank_height), Vectord(0.));
 
-  const double wall_thickness =
-      settings.dr * std::ceil(settings.smoothing_ratio) * 2.;
-
-  auto wall_bottom = PointDiscretize::Cube(
-      settings.dr, Vectord(tank_width, tank_width, wall_thickness),
-      Vectord(0, 0, -wall_thickness));
+  auto mesh = MeshShapes::Cube(Vectord(tank_width, tank_width, tank_height),
+                               Vectord(0.));
+  auto solid = SolidDiscretize::Discretize(4, settings.dr, mesh);
 
   const size_t n = fluid_pos.size();
   Particles p(settings, std::move(fluid_pos),
@@ -79,12 +78,17 @@ CaseSetup Cases::SimpleTank(const double wall_density,
 
   DynamicBoundary dbc(settings.dr * settings.smoothing_ratio * 2.,
                       std::pow(settings.dr, 3) * wall_density, settings.dr,
-                      std::move(wall_bottom));
+                      std::move(solid));
   CaseSetup s;
   s.d = Domain(std::move(p), std::move(dbc));
+  s.d.m = mesh;
   s.gravity = Vectord(0., 0., gravity);
-  s.num_outputs = 100;
+  s.num_outputs = 200;
   s.sim_time = 1.;
   s.output_dir = "./simple_tank";
   return s;
+}
+
+CaseSetup Cases::Dambreak(const double resolution) {
+  // FIXME
 }

@@ -57,6 +57,27 @@ class PointDiscretize {
     }
     return res;
   }
+
+  static std::vector<Vectord> StaggeredWall(const double dr, const Vectord dim,
+                                            Vectord trans) {
+    std::vector<Vectord> res;
+    const size_t xe = dim[0] / dr, ye = dim[1] / dr;
+    for (size_t x = 0; x < xe; ++x) {
+      for (size_t y = 0; y < ye; ++y) {
+        const Vectord p = Vectord{x * dr, y * dr, 0.} - 0.5 * dim;
+        res.push_back(p);
+        const Vectord p2 = Vectord{x * dr, y * dr, -0.5 * dr} - 0.5 * dim +
+                           Vectord(0.5 * dr, 0.5 * dr, 0.);
+        res.push_back(p2);
+      }
+    }
+    const Vectord offset = trans + 0.5 * Vectord(xe * dr, ye * dr, 2. * dr);
+    for (Vectord& p : res) {
+      p += offset;
+    }
+    return res;
+  }
+
   static std::vector<Vectord> Ellipsoid(const double dr, const Vectord dim,
                                         Vectord trans) {
     std::vector<Vectord> res;

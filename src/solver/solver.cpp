@@ -22,6 +22,8 @@
 
 #include "io/write_domain.hpp"
 #include "preprocess/cases.hpp"
+#include "preprocess/mesh_shapes.hpp"
+#include "preprocess/solid_discretize.hpp"
 #include "utils/types.hpp"
 #include "wsph/time_stepping.hpp"
 

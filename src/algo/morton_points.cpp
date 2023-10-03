@@ -80,7 +80,6 @@ MortonPoints<morton_type>::Create(const double cell_size,
   ForEachIndex(
       points.size(),
       [](const size_type i, mort_id_t *mids, size_type *map) {
-        const morton_type m = mids[i].morton;
         const size_type idx = mids[i].idx;
         map[i] = idx;
         mids[i].idx = i;

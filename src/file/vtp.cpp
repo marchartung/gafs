@@ -47,7 +47,7 @@ void VTP::SetMesh(const std::vector<Vectord>& points,
                   const std::vector<Array<uint32_t, 3>>& segments) {
   auto vtksegments = vtkSmartPointer<vtkCellArray>::New();
   auto vtkpoints = vtkSmartPointer<vtkPoints>::New();
-  for (auto& point_i : points)
+  for (const auto& point_i : points)
     vtkpoints->InsertNextPoint(point_i[0], point_i[1], point_i[2]);
 
   vtkSmartPointer<vtkCell> triangle = vtkSmartPointer<vtkTriangle>::New();

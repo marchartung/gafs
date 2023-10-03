@@ -60,6 +60,20 @@ void DpcShifting::Compute(const Domain& d) {
     collision_term_[i] = coll;
     repulsive_term_[i] = repu;
   }
+#pragma omp parallel for schedule(guided)
+  for (SizeT i = 0; i < d.p.size(); ++i) {
+    Vectord coll = 0.;
+    Vectord repu = 0.;
+    for (const SizeT j : d.p_dbc_neighbors.neighbors(i)) {
+      const Vectord rij = d.p.pos(i) - d.dbc.pos(j);
+      const double dist2 = rij * rij, dist = std::sqrt(dist2);
+
+      const double w = Wendland(dist, d.p.h()),
+                   ww0 = w + d.p.ref_density() / d.p.mass();
+    }
+    collision_term_[i] += coll;
+    repulsive_term_[i] += repu;
+  }
 }
 
 void DpcShifting::Apply(const double dt, Domain& d) {

@@ -50,8 +50,19 @@ void Write(const size_t output_num, const std::filesystem::path output_dir,
 }
 
 void Write(const size_t output_num, const std::filesystem::path output_dir,
+           const Mesh& m) {
+  VTP vtp;
+  vtp.SetMesh(m.vertices(), m.segments());
+  const std::filesystem::path path =
+      output_dir / ("mesh" + std::to_string(output_num) + ".vtp");
+  vtp.Export(path);
+}
+
+void Write(const size_t output_num, const std::filesystem::path output_dir,
            const Domain& d) {
   Write(output_num, output_dir, d.p);
   Write(output_num, output_dir, d.dbc);
-  std::cout << "wrote output " << output_num << std::endl;
+  Write(output_num, output_dir, d.m);
+  std::cout << "wrote output " << output_num << " num particles: " << d.p.size()
+            << " num dpc: " << d.dbc.size() << std::endl;
 }

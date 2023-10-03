@@ -34,6 +34,7 @@ using SizeT = uint32_t;
 using Vectorf = Array<float, 3>;
 using Vectord = Array<double, 3>;
 using Vectori = Array<int32_t, 3>;
+using Vectoru = Array<uint32_t, 3>;
 
 #ifdef GPU_ENABLED
 
