@@ -28,7 +28,7 @@
 #include "wsph/time_stepping.hpp"
 
 int main() {
-  CaseSetup setup = Cases::SimpleTank();
+  CaseSetup setup = Cases::Dambreak();
   std::filesystem::create_directories(setup.output_dir);
   DualSPHysicsVerletTS ts(setup.gravity);
 

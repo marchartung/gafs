@@ -34,6 +34,12 @@ class Mesh {
   Mesh(std::vector<Vectord> vertices, std::vector<Vectoru> segments)
       : vertices_(std::move(vertices)), segments_(std::move(segments)) {}
 
+  void FlipNormals() {
+    for (Vectoru& s : segments_) {
+      std::swap(s[0], s[1]);
+    }
+  }
+
   SizeT size() const { return segments_.size(); }
 
   Segment operator[](const size_t idx) const {

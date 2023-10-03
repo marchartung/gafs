@@ -22,34 +22,13 @@
 
 #pragma once
 
-#include <string>
-#include <vector>
+#include "materials.hpp"
+#include "particles.hpp"
 
-#include "point_shapes.hpp"
-#include "utils/types.hpp"
-#include "wsph/domain.hpp"
-#include "wsph/materials.hpp"
-#include "wsph/particles.hpp"
-
-struct CaseSetup {
-  double output_dt() const { return sim_time / num_outputs; }
-
-  double sim_time = 0.;
-  size_t num_outputs = 0;
-  std::string output_dir = "./";
-
-  Vectord gravity = 0.;
-  Domain d;
-};
-
-class Cases {
+class ParticleBoundary : public Particles {
  public:
-  static CaseSetup CollidingDroplets(const double droplet_resolution = 10.,
-                                     const double relative_velocity = 5.);
-
-  static CaseSetup SimpleTank(const double tank_resolution = 10.,
-                              const double tank_height = 0.5,
-                              const double tank_width = 0.5);
-
-  static CaseSetup Dambreak(const double resolution = 15.);
+  ParticleBoundary() = default;
+  ParticleBoundary(const MaterialSettings& s, std::vector<Vectord> pos,
+                   std::vector<Vectord> vel, std::vector<double> dty)
+      : Particles(s, std::move(pos), std::move(vel), std::move(dty)) {}
 };
