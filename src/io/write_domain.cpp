@@ -34,6 +34,7 @@ void Write(const size_t output_num, const std::filesystem::path output_dir,
   vtp.SetPoints(p.pos());
   vtp.AddPointData("velocity", p.vel().data(), p.size());
   vtp.AddPointData("density", p.dty().data(), p.size());
+  vtp.AddPointData("pressure", p.prs().data(), p.size());
 
   const std::filesystem::path path =
       output_dir / ("fluid_" + std::to_string(output_num) + ".vtp");
@@ -46,6 +47,10 @@ void Write(const size_t output_num, const std::filesystem::path output_dir,
   vtp.SetPoints(b.pos());
   const std::filesystem::path path =
       output_dir / ("solid_" + std::to_string(output_num) + ".vtp");
+  vtp.AddPointData("velocity", b.vel().data(), b.size());
+  vtp.AddPointData("density", b.dty().data(), b.size());
+  vtp.AddPointData("pressure", b.prs().data(), b.size());
+  vtp.AddPointData("normal", b.normal().data(), b.size());
   vtp.Export(path);
 }
 
@@ -53,6 +58,7 @@ void Write(const size_t output_num, const std::filesystem::path output_dir,
            const Mesh& m) {
   VTP vtp;
   vtp.SetMesh(m.vertices(), m.segments());
+  vtp.AddSegmentData("normal", m.normal().data(), m.segments().size());
   const std::filesystem::path path =
       output_dir / ("mesh" + std::to_string(output_num) + ".vtp");
   vtp.Export(path);
@@ -64,5 +70,5 @@ void Write(const size_t output_num, const std::filesystem::path output_dir,
   Write(output_num, output_dir, d.pb);
   Write(output_num, output_dir, d.m);
   std::cout << "wrote output " << output_num << " num particles: " << d.p.size()
-            << " num dpc: " << d.pb.size() << std::endl;
+            << " num boundary particles: " << d.pb.size() << std::endl;
 }

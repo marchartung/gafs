@@ -28,6 +28,7 @@
 #include <vector>
 
 #include "morton.hpp"
+#include "parstd/parstd.hpp"
 #include "utils/types.hpp"
 
 template <typename morton_type = Morton64>

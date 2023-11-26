@@ -2,7 +2,6 @@
 cmake_minimum_required(VERSION 3.10)
 
 set(SOURCES 
-  basic_algorithms.hpp
   morton.hpp
   morton_octree.hpp morton_octree.cpp
   morton_points.hpp morton_points.cpp

@@ -26,20 +26,20 @@
 #include <type_traits>
 
 template <typename T, typename Allocator = std::allocator<T>>
-class DynamicArray {
+class CpuStdVector {
   using MemoryContainer = std::unique_ptr<T>;
 
  public:
   using iterator = T*;
   using const_iterator = const T*;
 
-  DynamicArray() = default;
-  ~DynamicArray() { clear(); }
+  CpuStdVector() = default;
+  ~CpuStdVector() { clear(); }
 
-  DynamicArray(const size_t n) { resize(n); }
-  DynamicArray(const size_t n, const T value) { resize(n, value); }
+  CpuStdVector(const size_t n) { resize(n); }
+  CpuStdVector(const size_t n, const T value) { resize(n, value); }
 
-  DynamicArray<T>& operator=(const DynamicArray<T>& in) {
+  CpuStdVector<T>& operator=(const CpuStdVector<T>& in) {
     if constexpr (!std::is_trivially_destructible_v<T>) {
       clear();
     }
@@ -49,7 +49,7 @@ class DynamicArray {
     std::uninitialized_copy(in.begin(), in.end(), data());
     return *this;
   }
-  DynamicArray<T>& operator=(DynamicArray<T>&& in) {
+  CpuStdVector<T>& operator=(CpuStdVector<T>&& in) {
     std::swap(in.sz_, sz_);
     std::swap(in.cap_, cap_);
     std::swap(in.mem_, mem_);
@@ -64,12 +64,13 @@ class DynamicArray {
       sz_ = n;
     } else {
       if (n > cap_) {
-        DynamicArray<T> new_dyn_arr;
+        CpuStdVector<T> new_dyn_arr;
         new_dyn_arr.reserve(n);
         new_dyn_arr = *this;
         *this = std::move(new_dyn_arr);
       }
-      if constexpr (!std::is_trivially_constructible_v<T>) {
+      if constexpr (!std::is_trivially_constructible_v<
+                        T>) {  // hack, for e.g. int, values are not set to zero
         std::uninitialized_fill(data() + sz_, data() + n, T());
       }
       sz_ = n;

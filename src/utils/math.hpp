@@ -28,7 +28,7 @@ namespace math {
 
 template <typename T>
 constexpr T pi() {
-  return 3.14159265359;
+  return 3.14159265358979323851280895940618620443274267017841339111328125;
 }
 
 template <size_t Exponent, typename T>

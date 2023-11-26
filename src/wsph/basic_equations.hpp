@@ -47,29 +47,67 @@ DEVICE double ComputePressureTaylor(const double density,
   return sos * sos * (density - ref_density);
 }
 
-DEVICE double Wendland(const double distance, const double h) {
-  const double a = 21. / (16. * math::pi<double>()) / (h * h * h);
-  const double q = distance / h;
-  const double b = 1. - 0.5 * q;
-  return a * math::tpow<4>(b) * (1. + 2. * q);
+DEVICE constexpr double Wendland(const double distance, const double h) {
+  const double a = 21. / (16. * math::pi<double>());
+  const double h1 = 1. / h;
+  const double q = distance * h1;
+  return a * math::tpow<3>(h1) * math::tpow<4>(1. - 0.5 * q) * (1. + 2. * q);
 }
 
-DEVICE double Wendland0(const double h) {
-  const double a = 21. / (16. * math::pi<double>()) / (h * h * h);
-  return a;
+DEVICE constexpr double WendlandGradient(const double distance,
+                                         const double h) {
+  const double a = (21. / (16. * math::pi<double>()));
+  const double h1 = 1. / h;
+  const double q = distance * h1;
+  return -5. * a * math::tpow<4>(h1) * q * math::tpow<3>(1. - 0.5 * q);
 }
 
-DEVICE double WendlandGradient(const double distance, const double h) {
-  const double a = (-5. * 21. / (16. * math::pi<double>())) / math::tpow<5>(h);
-  const double q = distance / h;
-  const double b = 1. - 0.5 * q;
-  return a * q * math::tpow<3>(b);
+DEVICE constexpr double CubicSplineKernel(const double distance,
+                                          const double h) {
+  const double h1 = 1. / h;
+  const double q = distance * h1;
+  const double fac = 1. / (math::pi<double>() * math::tpow<3>(h));
+  if (q < 1.) {
+    return fac * (1. - 1.5 * math::tpow<2>(q) + 0.75 * math::tpow<3>(q));
+  } else {
+    return fac * 0.25 * math::tpow<3>(2. - q);
+  }
 }
-DEVICE double Chi(const double dist, const double dr) {
+DEVICE constexpr double CubicSplineKernelDerivative(const double distance,
+                                                    const double h) {
+  const double h1 = 1. / h;
+  const double q = distance * h1;
+  const double fac = 1. / (math::pi<double>() * math::tpow<3>(h));
+  if (q < 1.) {
+    return fac * (-3. * q + 2.25 * math::tpow<2>(q));
+  } else {
+    return fac * -0.75 * math::tpow<2>(2. - q);
+  }
+}
+
+DEVICE constexpr double QuadraticSplineKernel(const double distance,
+                                              const double h) {
+  const double h1 = 1. / h;
+  const double a = (15. / (16. * math::pi<double>())) * math::tpow<3>(h1);
+  const double q = distance * h1;
+  return a * (0.25 * math::tpow<2>(q) - q + 1.);
+}
+DEVICE constexpr double QuadraticSplineKernelGradient(const double distance,
+                                                      const double h) {
+  const double h1 = 1. / h;
+  const double a = (15. / (16. * math::pi<double>())) * math::tpow<3>(h1);
+  const double q = distance * h1;
+  return a * (0.5 * q - 1.);
+}
+
+DEVICE constexpr double Chi(const double dist, const double dr) {
   const double q1 = dist / dr, w1 = math::tpow<4>(1. - q1) * (4. * q1 + 1.);
   constexpr double q2 = 0.5, w2 = math::tpow<4>(1. - q2) * (4. * q2 + 1.);
   return std::sqrt(w1 / w2);
 }
+
+constexpr static auto Kernel = QuadraticSplineKernel;
+constexpr static auto KernelGradient = QuadraticSplineKernelGradient;
 
 std::vector<double> ComputePressure(const std::vector<double>& density,
                                     const double ref_density,

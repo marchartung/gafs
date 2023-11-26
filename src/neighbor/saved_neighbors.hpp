@@ -22,42 +22,44 @@
 
 #pragma once
 
+#include "parstd/ranges.hpp"
 #include "point_cell_list.hpp"
 #include "utils/math.hpp"
-#include "utils/span.hpp"
 #include "utils/types.hpp"
 
 class SavedNeighborsD {
  public:
+  using ConstRange = IteratorRange<const SizeT*>;
+  using Range = IteratorRange<SizeT*>;
+
   SavedNeighborsD() = default;
 
-  SavedNeighborsD(const PointCellListD& point_list) {
-    RecomputeNeighbors<true>(point_list, point_list);
-  }
+  SavedNeighborsD(const PointCellListD& point_list);
 
   SavedNeighborsD(const PointCellListD& src_list,
-                  const PointCellListD& trg_list) {
-    RecomputeNeighbors<false>(src_list, trg_list);
+                  const PointCellListD& trg_list);
+
+  SizeT size() const { return neighbors_.size(); }
+
+  ConstRange neighbors(const SizeT idx) const {
+    return ConstRange(neighbors_[idx].data(),
+                      neighbors_[idx].data() + neighbors_[idx].size());
+  }
+  Range neighbors(const SizeT idx) {
+    return Range(neighbors_[idx].data(),
+                 neighbors_[idx].data() + neighbors_[idx].size());
   }
 
-  Span<const SizeT> neighbors(const SizeT idx) const {
-    return Span<const SizeT>(neighbors_[idx].data(), num_active_[idx]);
-  }
+  ConstRange operator[](const SizeT idx) const { return neighbors(idx); }
+  Range operator[](const SizeT idx) { return neighbors(idx); }
 
   void Update(const PointCellListD& point_list);
-
   void Update(const PointCellListD& src_list, const PointCellListD& trg_list);
 
  private:
-  void SetActiveNeighbors(const PointCellListD& src_list,
-                          const PointCellListD& trg_list);
-
   template <bool IsSameList>
   void RecomputeNeighbors(const PointCellListD& src_list,
                           const PointCellListD& trg_list);
 
-  size_t src_update_version_ = 0;
-  size_t trg_update_version_ = 0;
   std::vector<std::vector<SizeT>> neighbors_;
-  std::vector<SizeT> num_active_;
 };

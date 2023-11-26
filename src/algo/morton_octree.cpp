@@ -28,7 +28,6 @@
 #include <execution>
 #include <tuple>
 
-#include "algo/basic_algorithms.hpp"
 #include "algo/morton_points.hpp"
 
 template <typename morton_type>

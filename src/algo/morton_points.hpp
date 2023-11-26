@@ -26,7 +26,7 @@
 #include <vector>
 
 #include "morton.hpp"
-#include "utils/macros.hpp"
+#include "parstd/parstd.hpp"
 
 template <typename morton_type = Morton64>
 class MortonPoints {

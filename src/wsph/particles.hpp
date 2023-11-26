@@ -44,25 +44,26 @@ class Particles {
     vel = ApplyIndexMap(idx_map, std::move(vel));
     dty = ApplyIndexMap(idx_map, std::move(dty));
     *this = Particles(s, std::move(points), std::move(vel), std::move(dty));
+    idx_map_ = std::move(idx_map);
+  }
+
+  Particles(const MaterialSettings& s, std::vector<Vectord> pos,
+            std::vector<Vectord> vel) {
+    std::vector<double> dtyinit(pos.size(), s.ref_density);
+    *this = Particles(s, std::move(pos), std::move(vel), std::move(dtyinit));
   }
 
   void Update() {
     const auto idx_map = pos_.Update();
-    if (idx_map.has_value()) {
-      vel_ = ApplyIndexMap(idx_map.value(), std::move(vel_));
-      dty_ = ApplyIndexMap(idx_map.value(), std::move(dty_));
-    }
+    vel_ = ApplyIndexMap(idx_map, std::move(vel_));
+    dty_ = ApplyIndexMap(idx_map, std::move(dty_));
   }
-
-  size_t UpdateVersion() const { return pos_.UpdateVersion(); }
 
   SizeT size() const { return pos_.size(); }
 
   const PointCellListD& pos() const { return pos_; }
   const Vectord& pos(const SizeT idx) const { return pos_[idx]; }
-  void SetPos(const SizeT idx, const Vectord& new_pos) {
-    pos_.SetPos(idx, new_pos);
-  }
+  Vectord& pos(const SizeT idx) { return pos_[idx]; }
 
   const std::vector<Vectord>& vel() const { return vel_; }
   std::vector<Vectord>& vel() { return vel_; }
@@ -80,10 +81,13 @@ class Particles {
   double pressure_parameter() const { return pressure_parameter_; }
   double ref_density() const { return ref_density_; }
   double mass() const { return mass_; }
+  double& mass() { return mass_; }
   double h() const { return h_; }
   double dr() const { return dr_; }
   double sos() const { return speed_of_sound_; }
   double viscosity() const { return 0.01; }
+
+  const std::vector<SizeT>& idx_map() const { return idx_map_; }
 
  private:
   Particles(const MaterialSettings& s, PointCellListD pos,
@@ -111,4 +115,6 @@ class Particles {
   std::vector<Vectord> vel_;
   std::vector<double> dty_;
   std::vector<double> prs_;
+
+  std::vector<SizeT> idx_map_;
 };

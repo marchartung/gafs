@@ -25,7 +25,8 @@
 template <bool IsSameList>
 void SavedNeighborsD::RecomputeNeighbors(const PointCellListD& src_list,
                                          const PointCellListD& trg_list) {
-  if (src_list.cell_size() != trg_list.cell_size()) {
+  if (src_list.cell_size() != trg_list.cell_size() &&
+      trg_list.num_points() != 0) {
     throw std::runtime_error(
         "SavedNeighborsD: Cell lists have different sizes");
   }
@@ -35,8 +36,7 @@ void SavedNeighborsD::RecomputeNeighbors(const PointCellListD& src_list,
     for (SizeT i = 0; i < src_list.size(); ++i) {
       neighbors_[i].clear();
     }
-    const double dist2 =
-        math::tpow<2>(src_list.cell_size() * src_list.cell_factor());
+    const double dist2 = math::tpow<2>(src_list.cell_size());
 #pragma omp parallel for schedule(guided)
     for (SizeT ci = 0; ci < src_list.num_cells(); ++ci) {
       SizeT nncells = 0;
@@ -65,48 +65,21 @@ void SavedNeighborsD::RecomputeNeighbors(const PointCellListD& src_list,
       }
     }
   }
-  SetActiveNeighbors(src_list, trg_list);
-  src_update_version_ = src_list.UpdateVersion();
-  trg_update_version_ = trg_list.UpdateVersion();
 }
-template void SavedNeighborsD::RecomputeNeighbors<true>(const PointCellListD&,
-                                                        const PointCellListD&);
-template void SavedNeighborsD::RecomputeNeighbors<false>(const PointCellListD&,
-                                                         const PointCellListD&);
+SavedNeighborsD::SavedNeighborsD(const PointCellListD& point_list) {
+  RecomputeNeighbors<true>(point_list, point_list);
+}
+
+SavedNeighborsD::SavedNeighborsD(const PointCellListD& src_list,
+                                 const PointCellListD& trg_list) {
+  RecomputeNeighbors<false>(src_list, trg_list);
+}
 
 void SavedNeighborsD::Update(const PointCellListD& point_list) {
-  if (point_list.UpdateVersion() != src_update_version_) {
-    RecomputeNeighbors<true>(point_list, point_list);
-  } else {
-    SetActiveNeighbors(point_list, point_list);
-  }
+  RecomputeNeighbors<true>(point_list, point_list);
 }
 
 void SavedNeighborsD::Update(const PointCellListD& src_list,
                              const PointCellListD& trg_list) {
-  if (src_list.UpdateVersion() != src_update_version_ ||
-      trg_list.UpdateVersion() != trg_update_version_) {
-    RecomputeNeighbors<false>(src_list, trg_list);
-  } else {
-    SetActiveNeighbors(src_list, trg_list);
-  }
-}
-
-void SavedNeighborsD::SetActiveNeighbors(const PointCellListD& src_list,
-                                         const PointCellListD& trg_list) {
-  num_active_.resize(src_list.size());
-  const double dist2 = math::tpow<2>(src_list.cell_size());
-#pragma omp parallel for schedule(guided)
-  for (SizeT i = 0; i < src_list.size(); ++i) {
-    SizeT j = 0, end = neighbors_[i].size();
-    while (j != end) {
-      if (math::tpow<2>(src_list[i] - trg_list[neighbors_[i][j]]) >= dist2) {
-        --end;
-        std::swap(neighbors_[i][j], neighbors_[i][end]);
-      } else {
-        ++j;
-      }
-    }
-    num_active_[i] = end;
-  }
+  RecomputeNeighbors<false>(src_list, trg_list);
 }

@@ -23,7 +23,9 @@
 #pragma once
 
 #include "mesh.hpp"
+#include "neighbor/position_tracker.hpp"
 #include "neighbor/saved_neighbors.hpp"
+#include "neighbor/verlet_neighbors.hpp"
 #include "particle_boundary.hpp"
 #include "particles.hpp"
 
@@ -37,13 +39,23 @@ struct Domain {
 
   Domain(Particles p_in) : Domain(std::move(p_in), ParticleBoundary()) {}
 
-  void Update() {
-    p.Update();
-    p_p_neighbors.Update(p.pos());
-    p_pb_neighbors.Update(p.pos(), pb.pos());
+  void SetFluidPos(const SizeT part_id, const Vectord pos) {
+    p.pos(part_id) = pos;
   }
 
+  void Update() {
+    p.Update();
+    p_p_neighbors = SavedNeighborsD(p.pos());
+    if (pb.size() > 0) {
+      p_pb_neighbors = SavedNeighborsD(p.pos(), pb.pos());
+    }
+    fluid_pos_tracker.Reset(p.size());
+  }
+
+  double verlet_factor = 1.2;
+
   Particles p;
+  PositionTracker fluid_pos_tracker;
   SavedNeighborsD p_p_neighbors;
 
   Mesh m;

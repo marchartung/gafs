@@ -22,9 +22,14 @@
 
 #include "shifting.hpp"
 
+#include <iostream>  // FIXME
+
 void DpcShifting::Compute(const Domain& d) {
   ComputePP(true, d.p, d.p, d.p_p_neighbors);
-  ComputePP(false, d.p, d.pb, d.p_pb_neighbors);
+
+  if (d.pb.size() > 0) {
+    ComputePP(false, d.p, d.pb, d.p_pb_neighbors);
+  }
 }
 
 void DpcShifting::ComputePP(const bool overwrite, const Particles& p,
@@ -78,6 +83,46 @@ void DpcShifting::Apply(const double dt, Domain& d) {
   for (SizeT i = 0; i < d.p.size(); ++i) {
     const Vectord delta = collision_term_[i] + dt * repulsive_term_[i];
     d.p.vel(i) += delta;
-    d.p.SetPos(i, d.p.pos(i) + dt * delta);
+    d.SetFluidPos(i, d.p.pos(i) + dt * delta);
+  }
+}
+
+void LindShifting::Compute(const Domain& d) {
+  ComputePP(true, d.p, d.p, d.p_p_neighbors);
+  if (d.pb.size() > 0) ComputePP(false, d.p, d.pb, d.p_pb_neighbors);
+}
+
+void LindShifting::Apply(const double dt, Domain& d) {
+#pragma omp parallel for schedule(static)
+  for (SizeT i = 0; i < d.p.size(); ++i) {
+    d.SetFluidPos(i, d.p.pos(i) + dt * delta_r_[i]);
+  }
+}
+
+void LindShifting::ComputePP(const bool overwrite, const Particles& p,
+                             const Particles& np, const SavedNeighborsD& sn) {
+  delta_r_.resize(p.size());
+  // #pragma omp parallel for schedule(guided)
+  for (SizeT i = 0; i < p.size(); ++i) {
+    Vectord c = 0.;
+    double nr = 0.;
+    for (const SizeT j : sn.neighbors(i)) {
+      const Vectord rij = p.pos(i) - np.pos(j);
+      const double dist2 = rij * rij, dist = std::sqrt(dist2);
+      const double vol = np.dty(j) / np.mass();
+      const Vectord wg = KernelGradient(dist, p.h()) * rij;
+
+      c += vol * wg;
+      nr += (vol * rij) * wg;
+    }
+    const double A_fsc = (nr - A_fst) / (A_fsm - A_fst);
+
+    Vectord shift = -A * p.h() * c;
+    if (nr - A_fst < 0) shift *= A_fsc;
+    if (overwrite) {
+      delta_r_[i] = shift;
+    } else {
+      delta_r_[i] += shift;
+    }
   }
 }

@@ -28,11 +28,18 @@
 // From Jandaghian et al, 2021: Stability and accuracy of the
 // weakly compressible SPH with particle regularization techniques
 
+class NoShifting {
+ public:
+  NoShifting() = default;
+
+  void Compute(const Domain& d) {}
+
+  void Apply(const double dt, Domain& d) {}
+};
+
 class DpcShifting {
  public:
   DpcShifting() = default;
-  DpcShifting(const double prs_min, const double prs_max)
-      : prs_min_(prs_min), prs_max_(prs_max) {}
 
   void Compute(const Domain& d);
 
@@ -46,4 +53,23 @@ class DpcShifting {
   double prs_max_ = std::numeric_limits<double>::max();
   std::vector<Vectord> collision_term_;
   std::vector<Vectord> repulsive_term_;
+};
+
+class LindShifting {
+ public:
+  LindShifting() = default;
+
+  void Compute(const Domain& d);
+
+  void Apply(const double dt, Domain& d);
+
+ private:
+  void ComputePP(const bool overwrite, const Particles& p, const Particles& np,
+                 const SavedNeighborsD& sn);
+
+  static constexpr double A = 2.;
+  static constexpr double A_fst = 2.75;
+  static constexpr double A_fsm = 3.;
+
+  std::vector<Vectord> delta_r_;
 };

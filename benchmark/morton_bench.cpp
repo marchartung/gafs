@@ -2,10 +2,10 @@
 
 #include <cstdint>
 
-#include "algo/basic_algorithms.hpp"
 #include "algo/morton_octree.hpp"
 #include "algo/morton_points.hpp"
 #include "helper_cpu_bench.hpp"
+#include "parstd/parstd.hpp"
 
 static void Morton64PointsCreate(benchmark::State& state) {
   auto [dr, init_points] = CreatePointCuboid(8'000'000, 1.0);

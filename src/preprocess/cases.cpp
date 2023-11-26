@@ -23,6 +23,7 @@
 #include "cases.hpp"
 
 #include <algorithm>
+#include <cmath>
 
 #include "mesh_shapes.hpp"
 #include "solid_discretize.hpp"
@@ -30,15 +31,45 @@
 
 CaseSetup Cases::CollidingDroplets(const double droplet_resolution,
                                    const double relative_velocity) {
+  const double droplet_size = 0.01, droplet_distance = 0.1 * droplet_size;
   MaterialSettings settings = MaterialSettings::Water();
-  const double droplet_d = 0.005, rel_vel = relative_velocity;
-  settings.dr = droplet_d / droplet_resolution;
-  settings.speed_of_sound = 2. * 10. * rel_vel;
-  auto pos = PointDiscretize::Ellipsoid(settings.dr, Vectord(droplet_d),
-                                        Vectord(-0.5 * droplet_d, 0., 0.));
+  const double rel_vel = relative_velocity;
+  settings.dr = droplet_size / droplet_resolution;
+  settings.speed_of_sound = 10. * rel_vel;
+  auto pos = PointDiscretize::Ellipsoid(
+      settings.dr, Vectord(droplet_size),
+      Vectord(-0.5 * (droplet_size + droplet_distance), 0., 0.));
   const size_t n1 = pos.size();
   const auto pos2 = PointDiscretize::Ellipsoid(
-      settings.dr, Vectord(droplet_d), Vectord(0.5 * droplet_d, 0., 0.));
+      settings.dr, Vectord(droplet_size),
+      Vectord(0.5 * (droplet_size + droplet_distance), 0., 0.));
+  pos.insert(pos.end(), pos2.begin(), pos2.end());
+  std::vector<Vectord> vel(pos.size(), Vectord(0.));
+  std::fill(vel.begin(), vel.begin() + n1, Vectord{rel_vel / 2, 0., 0.});
+  std::fill(vel.begin() + n1, vel.end(), Vectord{-rel_vel / 2., 0., 0.});
+  const size_t n = pos.size();
+  Particles p(settings, std::move(pos), std::move(vel),
+              std::vector<double>(n, settings.ref_density));
+
+  CaseSetup setup;
+  setup.num_outputs = 100;
+  setup.sim_time = 30. * droplet_size / relative_velocity;
+  setup.output_dir = "./colliding_droplets";
+  setup.d = Domain(std::move(p));
+  return setup;
+}
+
+CaseSetup Cases::CollidingCubes(const double droplet_resolution,
+                                const double relative_velocity) {
+  MaterialSettings settings = MaterialSettings::Water();
+  const double droplet_d = 0.5, rel_vel = relative_velocity;
+  settings.dr = droplet_d / droplet_resolution;
+  settings.speed_of_sound = 2. * 100. * relative_velocity;
+  auto pos = PointDiscretize::Cube(settings.dr, Vectord(droplet_d),
+                                   Vectord(-0.5 * droplet_d, 0., 0.));
+  const size_t n1 = pos.size();
+  const auto pos2 = PointDiscretize::Cube(settings.dr, Vectord(droplet_d),
+                                          Vectord(0.5 * droplet_d, 0., 0.));
   pos.insert(pos.end(), pos2.begin(), pos2.end());
   std::vector<Vectord> vel(pos.size(), Vectord(0.));
   std::fill(vel.begin(), vel.begin() + n1, Vectord{rel_vel / 2, 0., 0.});
@@ -49,8 +80,8 @@ CaseSetup Cases::CollidingDroplets(const double droplet_resolution,
 
   CaseSetup setup;
   setup.num_outputs = 50;
-  setup.sim_time = 0.005;
-  setup.output_dir = "./colliding_droplets";
+  setup.sim_time = 0.5;
+  setup.output_dir = "./colliding_cubes";
   setup.d = Domain(std::move(p));
   return setup;
 }
@@ -61,64 +92,67 @@ CaseSetup Cases::SimpleTank(const double tank_resolution,
   MaterialSettings settings = MaterialSettings::Water();
   settings.dr =
       std::cbrt(tank_width * tank_width * tank_height) / tank_resolution;
-  settings.speed_of_sound =
-      50. * std::abs(gravity) * std::sqrt(2. * tank_height / std::abs(gravity));
+  settings.speed_of_sound = 100. * std::abs(gravity) *
+                            std::sqrt(2. * tank_height / std::abs(gravity));
 
   auto fluid_pos = PointDiscretize::Cube(
-      settings.dr, Vectord(tank_width, tank_width, tank_height), Vectord(0.));
+      settings.dr, Vectord(tank_width, tank_width, 0.9 * tank_height),
+      Vectord(0.));
 
   auto mesh = MeshShapes::Cube(Vectord(tank_width, tank_width, tank_height),
                                Vectord(0.));
-  auto solid_pos = SolidDiscretize::Discretize(4, settings.dr, mesh);
+  auto solid = SolidDiscretize::DiscretizeNew(
+      std::ceil(settings.smoothing_ratio * 2.), settings.dr, mesh);
 
   const size_t nf = fluid_pos.size();
   Particles p(settings, std::move(fluid_pos),
               std::vector<Vectord>(nf, Vectord(0.)),
               std::vector<double>(nf, settings.ref_density));
 
-  const size_t npb = solid_pos.size();
-  ParticleBoundary pb(settings, std::move(solid_pos),
-                      std::vector<Vectord>(npb, Vectord(0.)),
-                      std::vector<double>(npb, settings.ref_density));
+  const size_t npb = std::get<0>(solid).size();
+  ParticleBoundary pb(settings, std::move(std::get<0>(solid)),
+                      std::move(std::get<1>(solid)),
+                      std::vector<Vectord>(npb, Vectord(0.)));
   CaseSetup s;
   s.d = Domain(std::move(p), std::move(pb));
   s.d.m = mesh;
   s.gravity = Vectord(0., 0., gravity);
-  s.num_outputs = 200;
-  s.sim_time = 1.;
+  s.num_outputs = 50;
+  s.sim_time = .1;
   s.output_dir = "./simple_tank";
   return s;
 }
 
 CaseSetup Cases::Dambreak(const double resolution) {
-  const double gravity = -9.81, tank_width = 0.5, tank_length = 2.,
+  const double gravity = -9.81, tank_width = 1., tank_length = 3.,
                tank_height = 1.;
   MaterialSettings settings = MaterialSettings::Water();
   settings.dr = std::cbrt(tank_width * tank_width * tank_width) / resolution;
   settings.speed_of_sound =
-      50. * std::abs(gravity) * std::sqrt(2. * tank_height / std::abs(gravity));
+      100. * std::abs(gravity) * std::sqrt(tank_height / std::abs(gravity));
 
   auto fluid_pos = PointDiscretize::Cube(
-      settings.dr, Vectord(tank_width, tank_width, tank_width), Vectord(0.));
+      settings.dr, Vectord(tank_width, tank_width, 0.5 * tank_height),
+      Vectord(0.));
 
   auto mesh = MeshShapes::Cube(Vectord(tank_width, tank_length, tank_height),
                                Vectord(0.));
-  auto solid_pos = SolidDiscretize::Discretize(3, settings.dr, mesh);
+  auto solid = SolidDiscretize::Discretize(3, settings.dr, mesh);
 
   const size_t nf = fluid_pos.size();
   Particles p(settings, std::move(fluid_pos),
               std::vector<Vectord>(nf, Vectord(0.)),
               std::vector<double>(nf, settings.ref_density));
 
-  const size_t npb = solid_pos.size();
-  ParticleBoundary pb(settings, std::move(solid_pos),
-                      std::vector<Vectord>(npb, Vectord(0.)),
-                      std::vector<double>(npb, settings.ref_density));
+  const size_t npb = std::get<0>(solid).size();
+  ParticleBoundary pb(settings, std::move(std::get<0>(solid)),
+                      std::move(std::get<1>(solid)),
+                      std::vector<Vectord>(npb, Vectord(0.)));
   CaseSetup s;
   s.d = Domain(std::move(p), std::move(pb));
   s.d.m = mesh;
   s.gravity = Vectord(0., 0., gravity);
-  s.num_outputs = 200;
+  s.num_outputs = 100;
   s.sim_time = 2.;
   s.output_dir = "./dambreak";
   return s;

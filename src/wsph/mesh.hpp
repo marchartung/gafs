@@ -32,12 +32,15 @@ class Mesh {
  public:
   Mesh() = default;
   Mesh(std::vector<Vectord> vertices, std::vector<Vectoru> segments)
-      : vertices_(std::move(vertices)), segments_(std::move(segments)) {}
+      : vertices_(std::move(vertices)), segments_(std::move(segments)) {
+    ComputeNormals();
+  }
 
   void FlipNormals() {
     for (Vectoru& s : segments_) {
       std::swap(s[0], s[1]);
     }
+    ComputeNormals();
   }
 
   SizeT size() const { return segments_.size(); }
@@ -47,13 +50,26 @@ class Mesh {
     return {vertices_[s[0]], vertices_[s[1]], vertices_[s[2]]};
   }
 
+  void ComputeNormals() {
+    normals_.clear();
+    for (size_t i = 0; i < segments_.size(); ++i) {
+      const Segment seg = operator[](i);
+      const Vectord n = CrossProduct(seg[1] - seg[0], seg[2] - seg[0]);
+      normals_.push_back(n / Length(n));
+    }
+  }
+
   const std::vector<Vectord>& vertices() const { return vertices_; }
   std::vector<Vectord>& vertices() { return vertices_; }
 
   const std::vector<Vectoru>& segments() const { return segments_; }
   std::vector<Vectoru>& segments() { return segments_; }
 
+  const std::vector<Vectord>& normal() const { return normals_; }
+  const Vectord& normal(const SizeT idx) const { return normals_[idx]; }
+
  private:
   std::vector<Vectord> vertices_;
   std::vector<Vectoru> segments_;
+  std::vector<Vectord> normals_;
 };

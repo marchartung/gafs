@@ -10,7 +10,6 @@ SET(SOURCES
   types.hpp
   random.hpp
   memory.hpp
-  span.hpp
 )
 
 

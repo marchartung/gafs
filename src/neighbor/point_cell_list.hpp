@@ -27,9 +27,9 @@
 #include <tuple>
 #include <vector>
 
-#include "algo/basic_algorithms.hpp"
 #include "algo/morton_octree.hpp"
 #include "coords.hpp"
+#include "parstd/parstd.hpp"
 #include "utils/types.hpp"
 
 template <typename T>
@@ -46,26 +46,25 @@ std::vector<T> ApplyIndexMap(const std::vector<SizeT>& idx_map,
 class PointCellListD {
   using OctreeType = MortonOctree<Morton64>;
 
+  static Coords GetCellListOffset(const double cell_size,
+                                  const std::vector<Vectord>& points) {
+    const Vectord min_p =
+        Reduce(points, Vectord(std::numeric_limits<double>::max()),
+               [](const Vectord a, const Vectord b) { return Min(a, b); });
+    return Coords(cell_size, -min_p) + 1;
+  }
+
  public:
   static std::tuple<std::vector<SizeT>, PointCellListD> Create(
-      const double in_cell_size, const std::vector<Vectord>& points) {
-    const double cell_size = cell_factor_ * in_cell_size;
-    std::vector<MortIdx<Morton64>> mort_ids(points.size());
+      const double cell_size, const std::vector<Vectord>& points) {
     if (points.size() == 0)
       return std::tuple<std::vector<SizeT>, PointCellListD>();
 
-    Vectord min_p = std::numeric_limits<double>::max();
-    double* mp = min_p.data();
-#pragma omp for schedule(static) reduction(min : mp[ : 3])
-    for (SizeT i = 0; i < points.size(); ++i) {
-      min_p = Min(points[i], min_p);
-    }
-
-    const Coords offset(cell_size, min_p);
-
+    const Coords offset = GetCellListOffset(cell_size, points);
+    std::vector<MortIdx<Morton64>> mort_ids(points.size());
 #pragma omp for schedule(static)
     for (SizeT i = 0; i < points.size(); ++i) {
-      mort_ids[i] = {Morton64(Coords(cell_size, points[i]) - offset), i};
+      mort_ids[i] = {Morton64(Coords(cell_size, points[i]) + offset), i};
     }
     Sort(mort_ids);
     std::vector<SizeT> index_map(points.size());
@@ -88,7 +87,7 @@ class PointCellListD {
     cell_starts.back() = points.size();
     OctreeType octree(std::move(mortons));
 
-    PointCellListD cell_list(in_cell_size, offset, std::move(sorted_points),
+    PointCellListD cell_list(cell_size, offset, std::move(sorted_points),
                              std::move(cell_starts), std::move(octree));
 
     return std::make_tuple(std::move(index_map), std::move(cell_list));
@@ -98,58 +97,47 @@ class PointCellListD {
 
   PointCellListD() = default;
 
-  bool NeedsUpdate() const {
-    double max_d = 0.;
-#pragma omp parallel for schedule(static) reduction(max : max_d)
-    for (SizeT i = 0; i < size(); ++i) {
-      max_d = std::max(max_d, moved_since_last_update_[i]);
-    }
-    const double cd = 0.5 * cell_size_ * (cell_factor_ - 1.);
-    return max_d >= cd;
-  }
-
-  size_t UpdateVersion() const { return times_updated_; }
-
-  std::optional<std::vector<SizeT>> Update() {
-    if (NeedsUpdate()) {
-      const size_t tmp_times_updated = times_updated_;
-      std::vector<SizeT> res;
-      std::tie(res, *this) = Create(cell_size_, std::move(points_));
-      times_updated_ = tmp_times_updated + 1;
-      return res;
-    }
-    return std::optional<std::vector<SizeT>>();
-  }
-
-  void SetPos(const SizeT idx, const Vectord new_pos) {
-    moved_since_last_update_[idx] += Length(points_[idx] - new_pos);
-    points_[idx] = new_pos;
+  std::vector<SizeT> Update() {
+    std::vector<SizeT> res;
+    std::tie(res, *this) = Create(cell_size_, std::move(points_));
+    return res;
   }
 
   double cell_size() const { return cell_size_; }
-  constexpr double cell_factor() const { return cell_factor_; }
 
-  const Vectord& point(const SizeT idx) const { return points_[idx]; }
-  Vectord& point(const SizeT idx) { return points_[idx]; }
+  const Vectord& point(const SizeT point_id) const { return points_[point_id]; }
+  Vectord& point(const SizeT point_id) { return points_[point_id]; }
   SizeT num_points() const { return points_.size(); }
 
-  const Vectord& operator[](const SizeT idx) const { return point(idx); }
-  Vectord& operator[](const SizeT idx) { return point(idx); }
+  const Vectord& operator[](const SizeT point_id) const {
+    return point(point_id);
+  }
+  Vectord& operator[](const SizeT point_id) { return point(point_id); }
 
   operator const std::vector<Vectord>&() const { return points_; }
 
   SizeT size() const { return num_points(); }
 
-  SizeT num_cells() const { return cell_starts_.size() - 1; }
+  SizeT num_cells() const {
+    return cell_starts_.size() + ((cell_starts_.empty()) ? 0 : -1);
+  }
 
   SizeT cell_id(const Coords c) const { return octree_[Morton64(c + offset_)]; }
 
-  Coords cell_coords(const SizeT idx) const {
-    return Coords(cell_size_, points_[cell_start(idx)]) - offset_;
+  Coords point_coords(const SizeT point_id) const {
+    return Coords(cell_size_, points_[point_id]);
   }
 
-  const SizeT cell_start(const SizeT idx) const { return cell_starts_[idx]; }
-  const SizeT cell_end(const SizeT idx) const { return cell_starts_[idx + 1]; }
+  Coords cell_coords(const SizeT cell_id) const {
+    return point_coords(cell_start(cell_id));
+  }
+
+  const SizeT cell_start(const SizeT cell_id) const {
+    return cell_starts_[cell_id];
+  }
+  const SizeT cell_end(const SizeT cell_id) const {
+    return cell_starts_[cell_id + 1];
+  }
 
  private:
   PointCellListD(const double cell_size, const Coords offset,
@@ -159,10 +147,7 @@ class PointCellListD {
         offset_(offset),
         points_(std::move(points)),
         cell_starts_(std::move(cell_starts)),
-        octree_(std::move(octree)),
-        moved_since_last_update_(points_.size(), 0.) {}
-
-  static constexpr double cell_factor_ = 1.2;
+        octree_(std::move(octree)) {}
 
   double cell_size_ = std::numeric_limits<double>::max();
 
@@ -170,7 +155,4 @@ class PointCellListD {
   std::vector<Vectord> points_;
   std::vector<SizeT> cell_starts_;
   OctreeType octree_;
-
-  size_t times_updated_ = 0;
-  std::vector<double> moved_since_last_update_;
 };

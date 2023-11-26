@@ -1,29 +1,23 @@
 #pragma once
 
-#include "algo/morton.hpp"
-#include "utils/random.hpp"
-#include "utils/types.hpp"
 #include <tuple>
 #include <vector>
 
-template<typename T>
-std::vector<T>
-RandomStdVector(const size_t n = 8'000'000,
-                const T min_v = 0,
-                const T max_v = static_cast<T>(35314590))
-{
+#include "algo/morton.hpp"
+#include "utils/random.hpp"
+#include "utils/types.hpp"
+
+template <typename T>
+std::vector<T> RandomStdVector(const size_t n = 8'000'000, const T min_v = 0,
+                               const T max_v = static_cast<T>(35314590)) {
   std::vector<T> res = Random(n, min_v, max_v);
   return res;
 }
 
-template<typename T>
-std::vector<T>
-RandomDuplicateStdVector(const size_t n = 8'000'000,
-                         const size_t redundant_fac = 20,
-                         const T min_v = 0,
-                         const T max_v = static_cast<T>(35314590))
-{
-
+template <typename T>
+std::vector<T> RandomDuplicateStdVector(
+    const size_t n = 8'000'000, const size_t redundant_fac = 20,
+    const T min_v = 0, const T max_v = static_cast<T>(35314590)) {
   std::vector<T> tmp = Random(n / redundant_fac, min_v, max_v);
   std::vector<T> values(tmp.size() * redundant_fac);
   for (size_t i = 0; i < tmp.size(); ++i) {
@@ -33,13 +27,11 @@ RandomDuplicateStdVector(const size_t n = 8'000'000,
   }
   return values;
 }
-template<size_t N, typename T>
-std::vector<VectorNT<N, T>>
-RandomStdVectorVectorNT(const size_t n = 8'000'000,
-                        const T min_v = 0,
-                        const T max_v = static_cast<T>(35314590))
-{
-  std::vector<VectorNT<N, T>> res;
+template <size_t N, typename T>
+std::vector<Array<T, N>> RandomStdVectorVectorNT(
+    const size_t n = 8'000'000, const T min_v = 0,
+    const T max_v = static_cast<T>(35314590)) {
+  std::vector<Array<T, N>> res;
   for (size_t i = 0; i < N; ++i) {
     const auto rn = RandomStdVector<T>(n, min_v, max_v);
     res.resize(n);
@@ -50,9 +42,8 @@ RandomStdVectorVectorNT(const size_t n = 8'000'000,
   return res;
 }
 
-inline std::tuple<double, std::vector<Vectord>>
-CreatePointCuboid(const size_t n = 8'000'000, const Vectord dims = Vectord(1.))
-{
+inline std::tuple<double, std::vector<Vectord>> CreatePointCuboid(
+    const size_t n = 8'000'000, const Vectord dims = Vectord(1.)) {
   const double f = std::cbrt(n / (dims[0] * dims[1] * dims[2]));
   const size_t xd = std::round(dims[0] * f), yd = std::round(dims[1] * f),
                zd = std::round(dims[2] * f);

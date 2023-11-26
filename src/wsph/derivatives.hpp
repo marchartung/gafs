@@ -36,7 +36,7 @@ struct Derivative {
     dtyD.resize(n);
   }
 
-  void Step(const double dt, const Vectord gravity, Particles& p);
+  void Step(const double dt, const Vectord gravity, Domain& d);
 
   std::vector<Vectord> acc;
   std::vector<double> dtyD;

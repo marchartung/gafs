@@ -5,6 +5,8 @@ cmake_minimum_required(VERSION 3.10)
   coords.hpp
   point_cell_list.hpp
   saved_neighbors.hpp saved_neighbors.cpp
+  verlet_neighbors.hpp verlet_neighbors.cpp
+  position_tracker.hpp
  )
 
 

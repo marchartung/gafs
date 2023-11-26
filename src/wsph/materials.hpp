@@ -26,9 +26,9 @@
 
 struct MaterialSettings {
   double ref_density = 1000.;
-  double speed_of_sound = 50.;
-  double smoothing_ratio = 1.5;
-  double dr = 0.00121 / 20.;
+  double speed_of_sound = 10.;
+  double smoothing_ratio = 1.3;
+  double dr = 0.1;
 
   static MaterialSettings Water() { return MaterialSettings(); }
 };

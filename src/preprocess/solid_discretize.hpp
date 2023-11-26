@@ -23,6 +23,8 @@
 #pragma once
 
 #include <cstdint>
+#include <tuple>
+#include <unordered_map>
 #include <unordered_set>
 
 #include "algo/morton.hpp"
@@ -94,8 +96,8 @@ DEVICE double SignedDistance(Vectord const& p, const Segment& s) {
 
 class SolidDiscretize {
  public:
-  static std::vector<Vectord> Discretize(const SizeT nlayers, const double dr,
-                                         const Mesh& mesh) {
+  static std::tuple<std::vector<Vectord>, std::vector<Vectord>> Discretize(
+      const SizeT nlayers, const double dr, const Mesh& mesh) {
     const double cell_size = nlayers * dr;
     Vectord dmin(std::numeric_limits<double>::max());
 
@@ -142,19 +144,69 @@ class SolidDiscretize {
     }
 
     SizeT j = 0;
+    std::vector<Vectord> normals;
     for (SizeT i = 0; i < pos.size(); ++i) {
       double min_dist = std::numeric_limits<double>::max();
+      Vectord n(0.);
       for (SizeT mi = 0; mi < mesh.size(); ++mi) {
         const Segment s = mesh[mi];
-        const double sdist = SignedDistance(pos[i], s);
-        if (sdist > 0.) continue;
-        min_dist = std::min(min_dist, std::abs(sdist));
+        const double sdist = -SignedDistance(pos[i], s);
+        if (sdist <= 0.) continue;
+        if (min_dist > sdist) {
+          min_dist = sdist;
+          n = mesh.normal(mi);
+        }
       }
       if (min_dist <= cell_size) {
         pos[j++] = pos[i];
+        normals.push_back(n);
       }
     }
     pos.resize(j);
-    return pos;
+    return std::make_tuple(std::move(pos), std::move(normals));
+  }
+
+  static std::tuple<std::vector<Vectord>, std::vector<Vectord>> DiscretizeNew(
+      const SizeT nlayers, const double dr, const Mesh& mesh) {
+    struct CellInfo {
+      SizeT layer_num = std::numeric_limits<SizeT>::max();
+      SizeT seg_i = std::numeric_limits<SizeT>::max();
+    };
+
+    Vectord dmin(std::numeric_limits<double>::max());
+    for (const auto& v : mesh.vertices()) {
+      dmin = Min(v, dmin);
+    }
+    dmin += 4. * nlayers * dr;
+    std::unordered_map<uint64_t, CellInfo> cells;
+    for (SizeT i = 0; i < mesh.size(); ++i) {
+      const Segment s = mesh[i];
+      const Vectord normal = mesh.normal(i);
+      const Vectord l1 = s[1] - s[0], l2 = s[2] - s[0];
+      const double n = std::ceil(std::max(Length(l1) / dr, Length(l2) / dr));
+      const Vectord d1 = l1 / n, d2 = l2 / n;
+      for (SizeT k = 0; k <= n; ++k)
+        for (SizeT l = 0; l <= n - k; ++l) {
+          for (SizeT cur_layer = 0; cur_layer < nlayers; ++cur_layer) {
+            const Vectord p =
+                s[0] - ((0.5 + cur_layer) * dr * normal) + (k * d1 + l * d2);
+            const Coords c = Cast<int32_t>((p + dmin) / dr);
+            const Morton64 m(c);
+            CellInfo& ci = cells[m.value()];
+            if (ci.layer_num > cur_layer) {
+              ci.layer_num = cur_layer;
+              ci.seg_i = i;
+            }
+          }
+        }
+    }
+
+    std::vector<Vectord> pos, normals;
+    for (auto [k, v] : cells) {
+      Vectord p = Cast<double>(Morton64(k).coords()) * dr - dmin;
+      pos.push_back(p);
+      normals.push_back(mesh.normal(v.seg_i));
+    }
+    return std::make_tuple(std::move(pos), std::move(normals));
   }
 };

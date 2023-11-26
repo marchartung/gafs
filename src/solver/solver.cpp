@@ -20,6 +20,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+#include <iostream>
+
 #include "io/write_domain.hpp"
 #include "preprocess/cases.hpp"
 #include "preprocess/mesh_shapes.hpp"
@@ -28,7 +30,7 @@
 #include "wsph/time_stepping.hpp"
 
 int main() {
-  CaseSetup setup = Cases::Dambreak();
+  CaseSetup setup = Cases::Dambreak(30.);
   std::filesystem::create_directories(setup.output_dir);
   DualSPHysicsVerletTS ts(setup.gravity);
 

@@ -51,7 +51,7 @@ class ForwardEuler {
 
  private:
   Vectord gravity_ = Vectord(0.);
-  BasicWeaklyRhs rhs_ = BasicWeaklyRhs(0.9);
+  BasicWeaklyRhs rhs_ = BasicWeaklyRhs(0.5);
   Derivative derivative_;
   DpcShifting shifting_;
 };
@@ -67,7 +67,7 @@ class DualSPHysicsVerletTS {
   void IntegrateFinalStep(const double dt, Domain& d);
 
   Vectord gravity_;
-  BasicWeaklyRhs rhs_ = BasicWeaklyRhs(1.5);
+  BasicWeaklyRhs rhs_ = BasicWeaklyRhs(1.);
   BaseParticlesState init_state_;
   Derivative derivative_;
   DpcShifting shifting_;

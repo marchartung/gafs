@@ -29,6 +29,18 @@ class ParticleBoundary : public Particles {
  public:
   ParticleBoundary() = default;
   ParticleBoundary(const MaterialSettings& s, std::vector<Vectord> pos,
-                   std::vector<Vectord> vel, std::vector<double> dty)
-      : Particles(s, std::move(pos), std::move(vel), std::move(dty)) {}
+                   std::vector<Vectord> normals, std::vector<Vectord> vel)
+      : Particles(s, std::move(pos), std::move(vel)) {
+    normal_ = ApplyIndexMap(idx_map(), std::move(normals));
+  }
+
+  void Interpolate(const Particles& p);
+
+  const std::vector<Vectord>& normal() const { return normal_; }
+
+  const Vectord& normal(const SizeT idx) const { return normal_[idx]; }
+  Vectord& normal(const SizeT idx) { return normal_[idx]; }
+
+ private:
+  std::vector<Vectord> normal_;
 };
