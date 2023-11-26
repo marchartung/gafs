@@ -100,14 +100,14 @@ DEVICE constexpr double QuadraticSplineKernelGradient(const double distance,
   return a * (0.5 * q - 1.);
 }
 
-DEVICE constexpr double Chi(const double dist, const double dr) {
-  const double q1 = dist / dr, w1 = math::tpow<4>(1. - q1) * (4. * q1 + 1.);
-  constexpr double q2 = 0.5, w2 = math::tpow<4>(1. - q2) * (4. * q2 + 1.);
-  return std::sqrt(w1 / w2);
-}
-
 constexpr static auto Kernel = QuadraticSplineKernel;
 constexpr static auto KernelGradient = QuadraticSplineKernelGradient;
+
+DEVICE constexpr double Chi(const double dist, const double dr) {
+  // const double q1 = dist / dr, w1 = math::tpow<4>(1. - q1) * (4. * q1 + 1.);
+  // constexpr double q2 = 0.5, w2 = math::tpow<4>(1. - q2) * (4. * q2 + 1.);
+  return std::sqrt(Kernel(dist, dr) / Kernel(0.5 * dr, dr));
+}
 
 std::vector<double> ComputePressure(const std::vector<double>& density,
                                     const double ref_density,

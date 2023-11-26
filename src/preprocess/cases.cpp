@@ -101,7 +101,7 @@ CaseSetup Cases::SimpleTank(const double tank_resolution,
 
   auto mesh = MeshShapes::Cube(Vectord(tank_width, tank_width, tank_height),
                                Vectord(0.));
-  auto solid = SolidDiscretize::DiscretizeNew(
+  auto solid = SolidDiscretize::Discretize(
       std::ceil(settings.smoothing_ratio * 2.), settings.dr, mesh);
 
   const size_t nf = fluid_pos.size();
@@ -118,7 +118,7 @@ CaseSetup Cases::SimpleTank(const double tank_resolution,
   s.d.m = mesh;
   s.gravity = Vectord(0., 0., gravity);
   s.num_outputs = 50;
-  s.sim_time = .1;
+  s.sim_time = .5;
   s.output_dir = "./simple_tank";
   return s;
 }

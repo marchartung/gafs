@@ -27,6 +27,10 @@
 #include <iostream>
 
 void ForwardEuler::TimeStep(const double dt, Domain& d) {
+  shifting_.SetPrs(ComputePressure(d.p.ref_density() * 0.8, d.p.ref_density(),
+                                   d.p.pressure_parameter()),
+                   ComputePressure(d.p.ref_density() * 1.2, d.p.ref_density(),
+                                   d.p.pressure_parameter()));
   const double t_start = omp_get_wtime();
   SizeT num_steps = 0;
   double stepped_time = 0.;

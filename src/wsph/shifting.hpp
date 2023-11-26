@@ -45,6 +45,11 @@ class DpcShifting {
 
   void Apply(const double dt, Domain& d);
 
+  void SetPrs(const double prs_min, const double prs_max) {
+    prs_min_ = prs_min;
+    prs_max_ = prs_max;
+  }
+
  private:
   void ComputePP(const bool overwrite, const Particles& p, const Particles& np,
                  const SavedNeighborsD& sn);
